@@ -1,0 +1,64 @@
+# Merukari Sold Counter
+
+Scrapping data on Merukari and export a CSV file
+
+# Contents
+
+- [Specification](#Specification)
+- [Branch](#branch)
+- [Installation](#installation)
+- [Development setup](#development-setup)
+- [External Tools](#external-tools)
+
+# Specification
+
+![Flowchart - Merukari Sold Counter drawio](https://github.com/user-attachments/assets/c2317e97-3df0-4ffa-8e49-96c4f4f56616)
+
+## Flowcharts
+
+### [Link to Flowchart 01](https://drive.google.com/file/d/1FayxFEV8n2rgoDbVdAEyvnnNboL9gJxZ/view?usp=sharing)<br>
+
+## Exaplanation videos
+
+### [Explanation video 01](https://youtu.be/gaO7pJhSgYM) <br>
+
+## Examples I/O files
+
+### [Example file 01](https://docs.google.com/spreadsheets/d/1SaieguLxp8nrFzjSr-qKWCcD1woiba4h2VKBL_SipwY/edit?usp=sharing)<br>
+
+# Branch
+
+Please develop features on feature/[name] branches and merge them into the dev branch. <br>
+Please leave a comment to describe what you did to each commit
+
+> master : for the production
+>
+> > doc : for editing README.md <br>
+> > dev : for developing the app <br>
+> >
+> > > feature/[name] : for developing individual features <br>
+> > > bugfix/[name] : for fixing bugs
+
+# Installation
+
+Make sure you have node.js, and pnpm installed locally, and type the bash script in the project folder to install dependencies
+
+```bash
+pnpm i
+```
+
+# Development Setup
+
+###### Make sure you have done installation and configuration
+
+Run typescript compiler from npm script
+
+```bash
+pnpm run tsx [filename]
+```
+
+# External tools
+
+### Proxy solutions
+
+- [scrape.do](https://scrape.do/)
