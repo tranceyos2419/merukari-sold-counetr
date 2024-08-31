@@ -22,7 +22,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Exaplanation videos
 
-### [Explanation video 01](https://youtu.be/gaO7pJhSgYM) <br>
+### [Explanation video 01](https://youtu.be/ysg9KbQ7noQ) <br>
 
 ## Examples I/O files
 
