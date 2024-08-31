@@ -10,6 +10,7 @@ Scrapping data on Merukari and export a CSV file<br>
 - [Installation](#installation)
 - [Development setup](#development-setup)
 - [External Tools](#external-tools)
+- [Reference](#reference)
 
 # Specification
 
@@ -63,3 +64,9 @@ pnpm run tsx [filename]
 ### Proxy solutions
 
 - [scrape.do](https://scrape.do/)
+
+# Reference
+
+### entities:search
+
+![Merukari-List-Item-JSON](https://github.com/user-attachments/assets/9d0bbbfe-4186-442c-9a9a-e05f070bc35a)
