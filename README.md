@@ -1,6 +1,7 @@
 # Merukari Sold Counter
 
-Scrapping data on Merukari and export a CSV file
+Scrapping data on Merukari and export a CSV file<br>
+➡️ Website to scrapse: [Merukari](https://jp.mercari.com)
 
 # Contents
 
