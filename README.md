@@ -18,7 +18,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Flowcharts
 
-### [Link to Flowchart 01](https://drive.google.com/file/d/12d6nrTEbC99chwnBQGqGn8G8alWJRQ0Q/view?usp=sharing)<br>
+### [Link to Flowchart 01](https://drive.google.com/file/d/1FayxFEV8n2rgoDbVdAEyvnnNboL9gJxZ/view?usp=sharing)<br>
 
 ## Exaplanation videos
 
