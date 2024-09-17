@@ -160,7 +160,9 @@ async function startScrapingProcess() {
   try {
     const csvData = await readCSVFile(FILE_PATH);
 
+
     for (const item of csvData) {
+      // formatting NMURL
       if (!item.NMURL.includes("price_max") || !item.NMURL.includes("status")) {
         item.NMURL = modifyNMURL(item.OMURL, item.SP);
       }
@@ -168,11 +170,13 @@ async function startScrapingProcess() {
       const items = await scrapeNMURL(item.NMURL);
 
       if (items.length > 0) {
+        // Checking if "updated" time is before 30 days
         for (const itm of items) {
           const itemUpdatedDate = new Date(itm.updated);
           const comparisonDate = new Date(date30daysBefore);
 
           if (itemUpdatedDate >= comparisonDate && itemUpdatedDate <= new Date()) {
+            // Increasing MSC of the item
             const index = csvData.findIndex((csvItem) => csvItem.Identity === item.Identity);
             if (index > -1) {
               csvData[index].MSC += 1;
@@ -180,11 +184,8 @@ async function startScrapingProcess() {
           }
         }
       }
-
       console.log(`Processed NMURL for ${item.Identity}`);
     }
-
-  
     saveCSVFile(FILE_PATH, csvData);
   } catch (error) {
     console.error("Error during the scraping process:", error);
