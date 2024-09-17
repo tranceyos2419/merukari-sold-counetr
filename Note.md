@@ -24,7 +24,6 @@
 - Do we need && itemUpdatedDate <= new Date() ?
 - Is this using the proxy correctly? Because I don't see any successful requests on scrape.do dashboard
 - Did you test this app with a large dataset like more than 300 data?
-- How can I launch a window when it's scrapping data from each URL?
 
 ### Future work
 
