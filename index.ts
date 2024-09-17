@@ -9,7 +9,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-
 const PROXY_URL = `http://api.scrape.do?token=${process.env.PROXY_TOKEN}&url=https://httpbin.co/ip`;
 
 const FILE_PATH = path.resolve(__dirname, "data.csv");
@@ -18,8 +17,7 @@ const FILE_PATH = path.resolve(__dirname, "data.csv");
 function getDate30DaysAgo(): string {
   const today = new Date();
   today.setDate(today.getDate() - 30);
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear(); const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
