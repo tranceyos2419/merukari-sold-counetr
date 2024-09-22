@@ -1,5 +1,4 @@
 import * as dotenv from "dotenv";
-import express from "express";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
@@ -7,17 +6,33 @@ import puppeteer from "puppeteer";
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 8080;
-const PROXY_URL = `http://api.scrape.do?token=${process.env.PROXY_TOKEN}&url=https://httpbin.co/ip`;
 
-const FILE_PATH = path.resolve(__dirname, "data.csv");
+const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
+const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
+
+// Interface for CSV row data
+interface CSVRow {
+  Identity: string;
+  OMURL: string;
+  SP: number;
+  NMURL: string;
+  MSC: number;
+}
+
+// Interface for scraped item data
+interface ScrapedItem {
+  id: string;
+  name: string;
+  status: string;
+  updated: string;
+}
 
 // Function to get the date 30 days ago
 function getDate30DaysAgo(): string {
   const today = new Date();
   today.setDate(today.getDate() - 30);
-  const year = today.getFullYear(); const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
@@ -41,42 +56,56 @@ function convertTimestampToDate(timestamp: string): string {
 }
 
 // Read CSV file
-async function readCSVFile(filePath: string): Promise<any[]> {
+
+async function readCSVFile(filePath: string): Promise<CSVRow[]> {
   return new Promise((resolve, reject) => {
-    const results: any[] = [];
+    const results: CSVRow[] = [];
     let rowNumber = 0;
 
     if (!fs.existsSync(filePath)) {
       return reject(new Error(`File not found: ${filePath}`));
     }
 
-    fs.createReadStream(filePath)
-      .pipe(csv({ separator: "," }))
+    const fileStream = fs.createReadStream(filePath);
+
+    // Use csv-parser as a cursor to process each row
+    const csvStream = fileStream.pipe(csv({ separator: "," }));
+
+    csvStream
       .on("data", (row) => {
         rowNumber++;
+
         try {
-          const trimmedRow = Object.keys(row).reduce((acc, key) => {
-            acc[key] = row[key].trim();
-            return acc;
-          }, {} as any);
+          const identity = row["Identity"]?.trim();
+          const omurl = row["OMURL"]?.trim();
+          const sp = row["S.P."]?.trim();
+          const msc = row["MSC"]?.trim() || "0"; 
 
-          if (!trimmedRow["Identity"] || !trimmedRow["OMURL"] || !trimmedRow["S.P."]) {
-            console.log(`Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(trimmedRow)}`);
+          // Check if essential fields exist
+          if (!identity || !omurl || !sp) {
+            console.log(
+              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
+                row
+              )}`
+            );
             return;
           }
 
-          const price = parseFloat(trimmedRow["S.P."].replace(/[^\d.-]/g, ""));
+          // Convert price (S.P.) and MSC to numbers
+          const price = parseFloat(sp.replace(/[^\d.-]/g, ""));
+          const mscNumber = parseFloat(msc);
+
           if (isNaN(price)) {
-            console.log(`Row ${rowNumber} skipped due to invalid price: ${JSON.stringify(trimmedRow)}`);
+            console.log(`Row ${rowNumber} skipped due to invalid price: ${sp}`);
             return;
           }
 
-          const processedRow = {
-            Identity: trimmedRow["Identity"],
-            OMURL: trimmedRow["OMURL"],
+          const processedRow: CSVRow = {
+            Identity: identity,
+            OMURL: omurl,
             SP: price,
-            MSC: parseInt(trimmedRow["MSC"]) || 0,
-            NMURL: modifyNMURL(trimmedRow["OMURL"], price),
+            MSC: isNaN(mscNumber) ? 0 : mscNumber, 
+            NMURL: modifyNMURL(omurl, price),
           };
 
           results.push(processedRow);
@@ -90,14 +119,12 @@ async function readCSVFile(filePath: string): Promise<any[]> {
 }
 
 // Scrape data
-async function scrapeNMURL(nmurl: string): Promise<any[]> {
-  const itemsArray: any[] = [];
-  const processedItemIds = new Set();
-
+async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
+  const itemsArray: ScrapedItem[] = [];
+  const processedItemIds = new Set<string>();
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      args: [`--proxy-server=${PROXY_URL}`],
     });
 
     const page = await browser.newPage();
@@ -107,10 +134,12 @@ async function scrapeNMURL(nmurl: string): Promise<any[]> {
       if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
         try {
           const jsonResponse = await response.json();
-          const items = jsonResponse.items.filter((item: any) => item.status === "ITEM_STATUS_SOLD_OUT");
+          const items: ScrapedItem[] = jsonResponse.items.filter(
+            (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
+          );
 
           // Filter out duplicates
-          items.forEach((item: any) => {
+          items.forEach((item: ScrapedItem) => {
             if (!processedItemIds.has(item.id)) {
               processedItemIds.add(item.id);
               itemsArray.push({
@@ -135,32 +164,33 @@ async function scrapeNMURL(nmurl: string): Promise<any[]> {
   }
 }
 
-// Save updated data back to the CSV file
-function saveCSVFile(filePath: string, data: any[]): void {
+// Save updated data back to a new CSV file (output.csv)
+function saveCSVFile(filePath: string, data: CSVRow[]): void {
   const headers = ["Identity", "OMURL", "S.P.", "NMURL", "MSC"];
   const csvContent = [
     headers.join(","),
     ...data.map((item) =>
-      [item.Identity, item.OMURL, `"${item.SP}"`, item.NMURL, item.MSC].join(",")
+      [item.Identity, item.OMURL, `"${item.SP}"`, item.NMURL, item.MSC].join(
+        ","
+      )
     ),
   ].join("\n");
 
   try {
     fs.writeFileSync(filePath, csvContent, "utf8");
-    console.log("CSV file updated successfully.");
+    console.log(`CSV file saved successfully as ${filePath}.`);
   } catch (error) {
     console.error("Error writing CSV file:", error);
   }
 }
 
-// initiate the scraping process
+// Initiate the scraping process
 async function startScrapingProcess() {
   try {
-    const csvData = await readCSVFile(FILE_PATH);
-
+    const csvData = await readCSVFile(INPUT_FILE_PATH);
 
     for (const item of csvData) {
-      // formatting NMURL
+      // Formatting NMURL
       if (!item.NMURL.includes("price_max") || !item.NMURL.includes("status")) {
         item.NMURL = modifyNMURL(item.OMURL, item.SP);
       }
@@ -173,9 +203,14 @@ async function startScrapingProcess() {
           const itemUpdatedDate = new Date(itm.updated);
           const comparisonDate = new Date(date30daysBefore);
 
-          if (itemUpdatedDate >= comparisonDate && itemUpdatedDate <= new Date()) {
+          if (
+            itemUpdatedDate >= comparisonDate &&
+            itemUpdatedDate <= new Date()
+          ) {
             // Increasing MSC of the item
-            const index = csvData.findIndex((csvItem) => csvItem.Identity === item.Identity);
+            const index = csvData.findIndex(
+              (csvItem) => csvItem.Identity === item.Identity
+            );
             if (index > -1) {
               csvData[index].MSC += 1;
             }
@@ -184,16 +219,11 @@ async function startScrapingProcess() {
       }
       console.log(`Processed NMURL for ${item.Identity}`);
     }
-    saveCSVFile(FILE_PATH, csvData);
+    // Save results to output.csv
+    saveCSVFile(OUTPUT_FILE_PATH, csvData);
   } catch (error) {
     console.error("Error during the scraping process:", error);
   }
 }
 
-
 startScrapingProcess();
-
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
