@@ -34,6 +34,7 @@
   => not working properly due to our nmurl beacuse when we use proxy on nmurl then this make it invalid link.
 - Did you test this app with a large dataset like more than 300 data?
   => yes i have also test with 500
+- Is this using the proxy correctly? Because I don't see any successful requests on scrape.do dashboard
 
 ### Future work
 
