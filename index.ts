@@ -6,6 +6,7 @@ import puppeteer from "puppeteer";
 
 dotenv.config();
 
+const PROXY_URL = `http://api.scrape.do?token=${process.env.PROXY_TOKEN}&url=https://httpbin.co/ip`;
 
 const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
 const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
@@ -79,7 +80,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           const identity = row["Identity"]?.trim();
           const omurl = row["OMURL"]?.trim();
           const sp = row["S.P."]?.trim();
-          const msc = row["MSC"]?.trim() || "0"; 
+          const msc = row["MSC"]?.trim() || "0";
 
           // Check if essential fields exist
           if (!identity || !omurl || !sp) {
@@ -104,7 +105,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
             Identity: identity,
             OMURL: omurl,
             SP: price,
-            MSC: isNaN(mscNumber) ? 0 : mscNumber, 
+            MSC: isNaN(mscNumber) ? 0 : mscNumber,
             NMURL: modifyNMURL(omurl, price),
           };
 
@@ -186,9 +187,9 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
 
 // Initiate the scraping process
 async function startScrapingProcess() {
+  console.log("This app is in Action")
   try {
     const csvData = await readCSVFile(INPUT_FILE_PATH);
-
     for (const item of csvData) {
       // Formatting NMURL
       if (!item.NMURL.includes("price_max") || !item.NMURL.includes("status")) {
