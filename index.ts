@@ -10,6 +10,7 @@ const PROXY_URL = `http://api.scrape.do?token=${process.env.PROXY_TOKEN}&url=htt
 
 const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
 const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
+const CUSTOM_OUTPUT_FILE_PATH = path.resolve(__dirname, "custom_output.csv");
 
 // Interface for CSV row data
 interface CSVRow {
@@ -184,6 +185,27 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
   }
 }
 
+// Save a custom CSV file with Keyword and Name columns
+function saveCustomCSVFile(filePath: string, data: CSVRow[]): void {
+  const headers = ["Keyword", "Name"];
+  const csvContent = [
+    headers.join(","),  // Add the header for Keyword and Name columns
+    ...data.map((item) =>
+      [
+        item.Keyword, // Copy Keyword from input.csv
+        `${item.Identity} | ${item.Identity} | sp: ${item.SP} | MSC: ${item.MSC}`, // Unchanged logic for Name
+      ].join(",")
+    ),
+  ].join("\n");
+
+  try {
+    fs.writeFileSync(filePath, csvContent, "utf8");
+    console.log(`Custom CSV file saved successfully as ${filePath}.`);
+  } catch (error) {
+    console.error("Error writing custom CSV file:", error);
+  }
+}
+
 // Initiate the scraping process
 async function startScrapingProcess() {
   console.log("This app is in Action");
@@ -221,6 +243,9 @@ async function startScrapingProcess() {
     }
     // Save results to output.csv
     saveCSVFile(OUTPUT_FILE_PATH, csvData);
+
+    // Save results to custom_output.csv with the new format
+    saveCustomCSVFile(CUSTOM_OUTPUT_FILE_PATH, csvData);
   } catch (error) {
     console.error("Error during the scraping process:", error);
   }
