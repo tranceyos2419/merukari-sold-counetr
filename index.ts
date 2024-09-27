@@ -14,7 +14,7 @@ const CUSTOM_OUTPUT_FILE_PATH = path.resolve(__dirname, "custom_output.csv");
 
 // Interface for CSV row data
 interface CSVRow {
-  Keyword: string;  // Added Keyword
+  Keyword : string ;
   Identity: string;
   OMURL: string;
   SP: number;
@@ -71,7 +71,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
 
     const fileStream = fs.createReadStream(filePath);
 
-    // Use csv-parser to process each row
+    // Use csv-parser as a cursor to process each row
     const csvStream = fileStream.pipe(csv({ separator: "," }));
 
     csvStream
@@ -79,7 +79,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
         rowNumber++;
 
         try {
-          const keyword = row["Keyword"]?.trim();  // Read Keyword
+          const keyword = row["Keyword"]?.trim();
           const identity = row["Identity"]?.trim();
           const omurl = row["OMURL"]?.trim();
           const sp = row["S.P."]?.trim();
@@ -88,8 +88,10 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           // Check if essential fields exist
           if (!keyword || !identity || !omurl || !sp) {
             console.log(
-              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(row)}`
-            );
+             `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
+                row
+              )}
+            `);
             return;
           }
 
@@ -103,7 +105,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           }
 
           const processedRow: CSVRow = {
-            Keyword: keyword,  // Add Keyword to the processed row
+            Keyword : keyword,
             Identity: identity,
             OMURL: omurl,
             SP: price,
@@ -162,18 +164,20 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 
     return itemsArray;
   } catch (error) {
-    console.error(`Error scraping ${nmurl}:`, error);
+    console.error(`Error scraping ${nmurl}:, error`);
     return [];
   }
 }
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
-  const headers = ["Keyword", "Identity", "OMURL", "S.P.", "NMURL", "MSC"];  // Include Keyword in headers
+  const headers = ["Identity", "OMURL", "S.P.", "NMURL", "MSC"];
   const csvContent = [
-    headers.join(","),  // Add the header
+    headers.join(","),
     ...data.map((item) =>
-      [item.Keyword, item.Identity, item.OMURL, `"${item.SP}"`, item.NMURL, item.MSC].join(",")
+      [item.Identity, item.OMURL, "${item.SP}", item.NMURL, item.MSC].join(
+        ","
+      )
     ),
   ].join("\n");
 
@@ -185,15 +189,15 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
   }
 }
 
-// Save a custom CSV file with Keyword and Name columns
+// New function to save a custom CSV file
 function saveCustomCSVFile(filePath: string, data: CSVRow[]): void {
   const headers = ["Keyword", "Name"];
   const csvContent = [
-    headers.join(","),  // Add the header for Keyword and Name columns
+    headers.join(","), // Add the header
     ...data.map((item) =>
       [
-        item.Keyword, // Copy Keyword from input.csv
-        `${item.Identity} | ${item.Identity} | sp: ${item.SP} | MSC: ${item.MSC}`, // Unchanged logic for Name
+        item.Keyword, // Keyword column
+        `${item.Identity} | ${item.Keyword} | sp: ${item.SP} | MSC: ${item.MSC}`,
       ].join(",")
     ),
   ].join("\n");
