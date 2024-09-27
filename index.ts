@@ -70,7 +70,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
 
     const fileStream = fs.createReadStream(filePath);
 
-    // Use csv-parser as a cursor to process each row
+    // Use csv-parser to process each row
     const csvStream = fileStream.pipe(csv({ separator: "," }));
 
     csvStream
@@ -78,7 +78,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
         rowNumber++;
 
         try {
-          const keyword = row["Keyword"]?.trim();  // Reading Keyword
+          const keyword = row["Keyword"]?.trim();  // Read Keyword
           const identity = row["Identity"]?.trim();
           const omurl = row["OMURL"]?.trim();
           const sp = row["S.P."]?.trim();
@@ -87,9 +87,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           // Check if essential fields exist
           if (!keyword || !identity || !omurl || !sp) {
             console.log(
-              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
-                row
-              )}`
+              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(row)}`
             );
             return;
           }
@@ -104,7 +102,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           }
 
           const processedRow: CSVRow = {
-            Keyword: keyword,  // Store Keyword in the row
+            Keyword: keyword,  // Add Keyword to the processed row
             Identity: identity,
             OMURL: omurl,
             SP: price,
@@ -170,18 +168,11 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
-  const headers = ["Keyword", "Identity", "OMURL", "S.P.", "NMURL", "MSC"]; // Keyword first
+  const headers = ["Keyword", "Identity", "OMURL", "S.P.", "NMURL", "MSC"];  // Include Keyword in headers
   const csvContent = [
-    headers.join(","),  // Include Keyword in headers
+    headers.join(","),  // Add the header
     ...data.map((item) =>
-      [
-        item.Keyword,     // Add Keyword to CSV content
-        item.Identity,
-        item.OMURL,
-        `"${item.SP}"`,
-        item.NMURL,
-        item.MSC
-      ].join(",")
+      [item.Keyword, item.Identity, item.OMURL, `"${item.SP}"`, item.NMURL, item.MSC].join(",")
     ),
   ].join("\n");
 
@@ -195,7 +186,7 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
 
 // Initiate the scraping process
 async function startScrapingProcess() {
-  console.log("This app is in Action")
+  console.log("This app is in Action");
   try {
     const csvData = await readCSVFile(INPUT_FILE_PATH);
     for (const item of csvData) {
