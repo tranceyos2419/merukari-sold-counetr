@@ -13,6 +13,7 @@ const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
 
 // Interface for CSV row data
 interface CSVRow {
+  Keyword: string;  // Added Keyword
   Identity: string;
   OMURL: string;
   SP: number;
@@ -77,13 +78,14 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
         rowNumber++;
 
         try {
+          const keyword = row["Keyword"]?.trim();  // Reading Keyword
           const identity = row["Identity"]?.trim();
           const omurl = row["OMURL"]?.trim();
           const sp = row["S.P."]?.trim();
           const msc = row["MSC"]?.trim() || "0";
 
           // Check if essential fields exist
-          if (!identity || !omurl || !sp) {
+          if (!keyword || !identity || !omurl || !sp) {
             console.log(
               `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
                 row
@@ -102,6 +104,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           }
 
           const processedRow: CSVRow = {
+            Keyword: keyword,  // Store Keyword in the row
             Identity: identity,
             OMURL: omurl,
             SP: price,
@@ -167,13 +170,18 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
-  const headers = ["Identity", "OMURL", "S.P.", "NMURL", "MSC"];
+  const headers = ["Keyword", "Identity", "OMURL", "S.P.", "NMURL", "MSC"]; // Keyword first
   const csvContent = [
-    headers.join(","),
+    headers.join(","),  // Include Keyword in headers
     ...data.map((item) =>
-      [item.Identity, item.OMURL, `"${item.SP}"`, item.NMURL, item.MSC].join(
-        ","
-      )
+      [
+        item.Keyword,     // Add Keyword to CSV content
+        item.Identity,
+        item.OMURL,
+        `"${item.SP}"`,
+        item.NMURL,
+        item.MSC
+      ].join(",")
     ),
   ].join("\n");
 
