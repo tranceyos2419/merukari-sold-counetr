@@ -175,7 +175,7 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
   const csvContent = [
     headers.join(","),
     ...data.map((item) =>
-      [item.Identity, item.OMURL, "${item.SP}", item.NMURL, item.MSC].join(
+      [item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC].join(
         ","
       )
     ),
