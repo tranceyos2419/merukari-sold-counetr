@@ -6,11 +6,9 @@ import puppeteer from "puppeteer";
 
 dotenv.config();
 
-const PROXY_URL = `http://api.scrape.do?token=${process.env.PROXY_TOKEN}&url=https://httpbin.co/ip`;
 
 const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
 const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
-const CUSTOM_OUTPUT_FILE_PATH = path.resolve(__dirname, "custom_output.csv");
 
 // Interface for CSV row data
 interface CSVRow {
@@ -29,6 +27,7 @@ interface ScrapedItem {
   status: string;
   updated: string;
 }
+
 
 // Function to get the date 30 days ago
 function getDate30DaysAgo(): string {
@@ -169,13 +168,62 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
   }
 }
 
+// Function to get min price from the URL
+function getMinPriceFromURL(url:string) {
+    const params = new URL(url).searchParams;
+    return params.get("price_min");
+  }
+  
+  // Function to get max price from the URL
+  function getMaxPriceFromURL(url:string) {
+    const params = new URL(url).searchParams;
+    return params.get("price_max");
+  }
+
+  function separateByCommas(inputString:string) {
+    const components = inputString.split(" ").filter(part => part !== "");
+    return components.join(", ");
+  }
+
+  function decodeExcludeKeyword(urlString: string): string | null {
+    try {
+        const parsedUrl = new URL(urlString);
+        const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
+        const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
+        return decodedKeyword;
+    } catch (error) {
+        console.error('Invalid URL:', error);
+        return null;
+    }
+}
+
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
-  const headers = ["Identity", "OMURL", "S.P.", "NMURL", "MSC"];
+    const headers = [
+        "Keyword", "Identity", "OMURL", "SP", "NMURL", "MSC", "name", "switchAll",
+        "kws", "kwes", "pmin", "pmax", "sve", "nickname", "nicknameExs", 
+        "itemStatuses", "freeShipping", "kwsTitle", "kwesTitle", "autoBuy", 
+        "gotoBuy", "type", "target", "category", "size", "brand", "sellerId", 
+        "sellerIdExs", "notificationCnt", "receiveCnt", "openCnt", "buyCnt", 
+        "buyPrice", "autoBuyTryCnt", "autoBuySuccessCnt", "autoMoveTryCnt", 
+        "autoMoveSuccessCnt", "tags", "memo"
+      ];
   const csvContent = [
     headers.join(","),
     ...data.map((item) =>
-      [item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC].join(
+        [
+            item.Keyword, item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC, 
+            `${item.Identity} | ${item.Keyword} | sp: ${item.SP} | MSC: ${item.MSC}`, true, 
+            `"${separateByCommas(item.Identity)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL), 
+            " ", 
+            "", " ", '"2,3,4,5"', " ", 
+            `"${separateByCommas(item.Identity)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal", 
+            " ", " ", " ", " ", 
+            " ", " ", 0, 0, 
+            0, " ", " ", 0, 
+            0, 0, 0,
+            item.Identity, item.NMURL, 
+          ].join(
         ","
       )
     ),
@@ -186,27 +234,6 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
     console.log(`CSV file saved successfully as ${filePath}.`);
   } catch (error) {
     console.error("Error writing CSV file:", error);
-  }
-}
-
-// New function to save a custom CSV file
-function saveCustomCSVFile(filePath: string, data: CSVRow[]): void {
-  const headers = ["Keyword", "Name"];
-  const csvContent = [
-    headers.join(","), // Add the header
-    ...data.map((item) =>
-      [
-        item.Keyword, // Keyword column
-        `${item.Identity} | ${item.Keyword} | sp: ${item.SP} | MSC: ${item.MSC}`,
-      ].join(",")
-    ),
-  ].join("\n");
-
-  try {
-    fs.writeFileSync(filePath, csvContent, "utf8");
-    console.log(`Custom CSV file saved successfully as ${filePath}.`);
-  } catch (error) {
-    console.error("Error writing custom CSV file:", error);
   }
 }
 
@@ -247,9 +274,6 @@ async function startScrapingProcess() {
     }
     // Save results to output.csv
     saveCSVFile(OUTPUT_FILE_PATH, csvData);
-
-    // Save results to custom_output.csv with the new format
-    saveCustomCSVFile(CUSTOM_OUTPUT_FILE_PATH, csvData);
   } catch (error) {
     console.error("Error during the scraping process:", error);
   }
