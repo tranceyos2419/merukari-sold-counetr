@@ -180,22 +180,41 @@ function getMinPriceFromURL(url:string) {
     return params.get("price_max");
   }
 
-  function separateByCommas(inputString:string) {
-    const components = inputString.split(" ").filter(part => part !== "");
-    return components.join(", ");
-  }
-
-  function decodeExcludeKeyword(urlString: string): string | null {
+  function separateByCommas(url: string): string | null {
     try {
-        const parsedUrl = new URL(urlString);
-        const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
-        const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
-        return decodedKeyword;
+        const parsedUrl = new URL(url);
+        const keyword = parsedUrl.searchParams.get('keyword');
+        
+        if (keyword) {
+            const components = keyword.split(" ").filter(part => part !== "");
+            return components.join(", ");
+        } else {
+            return null; 
+        }
     } catch (error) {
         console.error('Invalid URL:', error);
         return null;
     }
 }
+
+function decodeExcludeKeyword(urlString: string): string | null {
+  try {
+      const parsedUrl = new URL(urlString);
+      const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
+
+      const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
+      if (decodedKeyword) {
+          const components = decodedKeyword.split(" ").filter(part => part !== "");
+          return components.join(" | ");
+      }
+
+      return null;
+  } catch (error) {
+      console.error('Invalid URL:', error);
+      return null;
+  }
+}
+
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
@@ -213,11 +232,11 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
     ...data.map((item) =>
         [
             item.Keyword, item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC, 
-            `${item.Identity} | ${item.Keyword} | sp: ${item.SP} | MSC: ${item.MSC}`, true, 
-            `"${separateByCommas(item.Identity)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL), 
+            `${item.Identity} | ${item.Keyword} | SP: ${item.SP} | MSC: ${item.MSC}`, true, 
+            `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL), 
             " ", 
             "", " ", '"2,3,4,5"', " ", 
-            `"${separateByCommas(item.Identity)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal", 
+            `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal", 
             " ", " ", " ", " ", 
             " ", " ", 0, 0, 
             0, " ", " ", 0, 
