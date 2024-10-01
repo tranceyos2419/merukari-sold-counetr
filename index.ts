@@ -12,7 +12,7 @@ const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
 
 // Interface for CSV row data
 interface CSVRow {
-  Keyword : string ;
+  Keyword: string;
   Identity: string;
   OMURL: string;
   SP: number;
@@ -87,7 +87,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           // Check if essential fields exist
           if (!keyword || !identity || !omurl || !sp) {
             console.log(
-             `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
+              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
                 row
               )}
             `);
@@ -104,7 +104,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           }
 
           const processedRow: CSVRow = {
-            Keyword : keyword,
+            Keyword: keyword,
             Identity: identity,
             OMURL: omurl,
             SP: price,
@@ -169,80 +169,80 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 }
 
 // Function to get min price from the URL
-function getMinPriceFromURL(url:string) {
-    const params = new URL(url).searchParams;
-    return params.get("price_min");
-  }
-  
-  // Function to get max price from the URL
-  function getMaxPriceFromURL(url:string) {
-    const params = new URL(url).searchParams;
-    return params.get("price_max");
-  }
+function getMinPriceFromURL(url: string) {
+  const params = new URL(url).searchParams;
+  return params.get("price_min");
+}
 
-  function separateByCommas(url: string): string | null {
-    try {
-        const parsedUrl = new URL(url);
-        const keyword = parsedUrl.searchParams.get('keyword');
-        
-        if (keyword) {
-            const components = keyword.split(" ").filter(part => part !== "");
-            return components.join(", ");
-        } else {
-            return null; 
-        }
-    } catch (error) {
-        console.error('Invalid URL:', error);
-        return null;
+// Function to get max price from the URL
+function getMaxPriceFromURL(url: string) {
+  const params = new URL(url).searchParams;
+  return params.get("price_max");
+}
+
+function separateByCommas(url: string): string | null {
+  try {
+    const parsedUrl = new URL(url);
+    const keyword = parsedUrl.searchParams.get('keyword');
+
+    if (keyword) {
+      const components = keyword.split(" ").filter(part => part !== "");
+      return components.join(",");
+    } else {
+      return null;
     }
+  } catch (error) {
+    console.error('Invalid URL:', error);
+    return null;
+  }
 }
 
 function decodeExcludeKeyword(urlString: string): string | null {
   try {
-      const parsedUrl = new URL(urlString);
-      const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
+    const parsedUrl = new URL(urlString);
+    const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
 
-      const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
-      if (decodedKeyword) {
-          const components = decodedKeyword.split(" ").filter(part => part !== "");
-          return components.join(" | ");
-      }
+    const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
+    if (decodedKeyword) {
+      const components = decodedKeyword.split(" ").filter(part => part !== "");
+      return components.join("|");
+    }
 
-      return null;
+    return null;
   } catch (error) {
-      console.error('Invalid URL:', error);
-      return null;
+    console.error('Invalid URL:', error);
+    return null;
   }
 }
 
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
-    const headers = [
-        "Keyword", "Identity", "OMURL", "SP", "NMURL", "MSC", "name", "switchAll",
-        "kws", "kwes", "pmin", "pmax", "sve", "nickname", "nicknameExs", 
-        "itemStatuses", "freeShipping", "kwsTitle", "kwesTitle", "autoBuy", 
-        "gotoBuy", "type", "target", "category", "size", "brand", "sellerId", 
-        "sellerIdExs", "notificationCnt", "receiveCnt", "openCnt", "buyCnt", 
-        "buyPrice", "autoBuyTryCnt", "autoBuySuccessCnt", "autoMoveTryCnt", 
-        "autoMoveSuccessCnt", "tags", "memo"
-      ];
+  const headers = [
+    "Keyword", "Identity", "OMURL", "SP", "NMURL", "MSC", "name", "switchAll",
+    "kws", "kwes", "pmin", "pmax", "sve", "nickname", "nicknameExs",
+    "itemStatuses", "freeShipping", "kwsTitle", "kwesTitle", "autoBuy",
+    "gotoBuy", "type", "target", "category", "size", "brand", "sellerId",
+    "sellerIdExs", "notificationCnt", "receiveCnt", "openCnt", "buyCnt",
+    "buyPrice", "autoBuyTryCnt", "autoBuySuccessCnt", "autoMoveTryCnt",
+    "autoMoveSuccessCnt", "tags", "memo"
+  ];
   const csvContent = [
     headers.join(","),
     ...data.map((item) =>
-        [
-            item.Keyword, item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC, 
-            `${item.Identity} | ${item.Keyword} | SP: ${item.SP} | MSC: ${item.MSC}`, true, 
-            `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL), 
-            " ", 
-            "", " ", '"2,3,4,5"', " ", 
-            `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal", 
-            " ", " ", " ", " ", 
-            " ", " ", 0, 0, 
-            0, " ", " ", 0, 
-            0, 0, 0,
-            item.Identity, item.NMURL, 
-          ].join(
+      [
+        item.Keyword, item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC,
+        `${item.Identity} | ${item.Keyword} | SP: ${item.SP} | MSC: ${item.MSC}`, true,
+        `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL),
+        " ",
+        "", " ", '"2,3,4,5"', " ",
+        `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal",
+        " ", " ", " ", " ",
+        " ", " ", 0, 0,
+        0, " ", " ", 0,
+        0, 0, 0,
+        item.Identity, item.NMURL,
+      ].join(
         ","
       )
     ),
