@@ -6,7 +6,6 @@ import puppeteer from "puppeteer";
 
 dotenv.config();
 
-
 const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
 const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
 
@@ -40,6 +39,7 @@ function getDate30DaysAgo(): string {
 }
 
 const date30daysBefore = getDate30DaysAgo();
+const comparisonDate = new Date(date30daysBefore);
 
 // Modify NMURL based on parameters
 function modifyNMURL(omurl: string, sp: number): string {
@@ -153,7 +153,7 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
             }
           });
         } catch (error) {
-          // console.warn("Issue parsing JSON response");
+          console.warn("Issue parsing JSON response");
         }
       }
     });
@@ -273,8 +273,6 @@ async function startScrapingProcess() {
         // Checking if "updated" time is before 30 days
         for (const itm of items) {
           const itemUpdatedDate = new Date(itm.updated);
-          const comparisonDate = new Date(date30daysBefore);
-
           if (
             itemUpdatedDate >= comparisonDate &&
             itemUpdatedDate <= new Date()
