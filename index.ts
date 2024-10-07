@@ -295,4 +295,11 @@ async function startScrapingProcess() {
   }
 }
 
-startScrapingProcess();
+// Calculating execution time
+var start = new Date().getTime();
+
+startScrapingProcess(); // main logic
+
+var end = new Date().getTime();
+var time = end - start;
+console.log(`Execution time: ${time}`)
