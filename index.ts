@@ -257,7 +257,6 @@ function saveCSVFile(filePath: string, data: CSVRow[]): void {
 
 // Initiate the scraping process
 async function startScrapingProcess() {
-  console.log("This app is in Action");
   try {
     const csvData = await readCSVFile(INPUT_FILE_PATH);
     for (const item of csvData) {
@@ -295,8 +294,8 @@ async function startScrapingProcess() {
   }
 }
 
-// Calculating execution time
-var start = new Date().getTime();
+console.log("This app is in Action");
+var start = new Date().getTime(); // Calculating execution time
 
 startScrapingProcess(); // main logic
 

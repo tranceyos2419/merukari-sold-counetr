@@ -56,7 +56,7 @@ pnpm i
 Run typescript compiler from npm script
 
 ```bash
-pnpm run tsx [filename]
+pnpm run start
 ```
 
 # External tools
