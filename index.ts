@@ -27,7 +27,6 @@ interface ScrapedItem {
   updated: string;
 }
 
-
 // Function to get the date 30 days ago
 function getDate30DaysAgo(): string {
   const today = new Date();
@@ -58,7 +57,6 @@ function convertTimestampToDate(timestamp: string): string {
 }
 
 // Read CSV file
-
 async function readCSVFile(filePath: string): Promise<CSVRow[]> {
   return new Promise((resolve, reject) => {
     const results: CSVRow[] = [];
@@ -135,6 +133,7 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 
     page.on("response", async (response) => {
       const requestUrl = response.url();
+      console.log(JSON.stringify(requestUrl))
       if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
         try {
           const jsonResponse = await response.json();
