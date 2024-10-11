@@ -214,6 +214,16 @@ function decodeExcludeKeyword(urlString: string): string | null {
   }
 }
 
+function millisToMinutesAndSeconds(millis: number) {
+  var minutes = Math.floor(millis / 60000);
+  var seconds = ((millis % 60000) / 1000);
+  return (
+    seconds == 60 ?
+      (minutes + 1) + ":00" :
+      minutes + ":" + (seconds < 10 ? "0" : "") + seconds.toFixed(0)
+  );
+}
+
 
 // Save updated data back to a new CSV file (output.csv)
 function saveCSVFile(filePath: string, data: CSVRow[]): void {
@@ -295,10 +305,9 @@ async function startScrapingProcess() {
 }
 
 console.log("This app is in Action");
-var start = new Date().getTime(); // Calculating execution time
+const startTime = performance.now()
 
 startScrapingProcess(); // main logic
 
-var end = new Date().getTime();
-var time = end - start;
-console.log(`Execution time: ${time}`)
+const endTime = performance.now()
+console.log(`This Execution took ${millisToMinutesAndSeconds(endTime - startTime)}`)
