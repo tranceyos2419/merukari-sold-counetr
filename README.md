@@ -11,6 +11,7 @@ Scrapping data on Merukari and export a CSV file<br>
 - [Development setup](#development-setup)
 - [External Tools](#external-tools)
 - [Reference](#reference)
+- [Future work](#future-work)
 
 # Specification
 
@@ -70,3 +71,7 @@ pnpm run start
 ### entities:search
 
 ![Merukari-List-Item-JSON](https://github.com/user-attachments/assets/9d0bbbfe-4186-442c-9a9a-e05f070bc35a)
+
+# Future Work
+
+- Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
