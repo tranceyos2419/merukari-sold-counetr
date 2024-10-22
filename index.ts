@@ -2,7 +2,10 @@ import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+puppeteer.use(StealthPlugin());
 
 dotenv.config();
 
@@ -79,7 +82,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
           const keyword = row["Keyword"]?.trim();
           const identity = row["Identity"]?.trim();
           const omurl = row["OMURL"]?.trim();
-          const sp = row["S.P."]?.trim();
+          const sp = row["SP"]?.trim();
           const msc = row["MSC"]?.trim() || "0";
 
           // Check if essential fields exist
@@ -125,15 +128,34 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
   const itemsArray: ScrapedItem[] = [];
   const processedItemIds = new Set<string>();
   try {
+    let args = [
+      '--disable-blink-features=AutomationControlled',
+      "--disable-webgl",
+      "--disable-webrtc",
+      "--disable-dev-shm-usage",
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--window-size=375,667"
+      // "--v=1"
+    ]
+
     const browser = await puppeteer.launch({
-      headless: true,
-    });
+      headless: false,
+      defaultViewport: null,
+      args
+    })
 
     const page = await browser.newPage();
 
+    // const [res] = await Promise.all([
+    //   page.waitForResponse(res => res.url() === "https://api.mercari.jp/v2/entities:search", {timeout: 90_000}),
+    //   page.goto(nmurl, {waitUntil: "domcontentloaded"}),
+    // ]);
+    // console.log("response::",await res.json());
+
     page.on("response", async (response) => {
       const requestUrl = response.url();
-      console.log(JSON.stringify(requestUrl))
+      
       if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
         try {
           const jsonResponse = await response.json();
@@ -152,17 +174,17 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
             }
           });
         } catch (error) {
-          console.warn("Issue parsing JSON response");
+          console.warn("Issue parsing JSON response " + error);
         }
       }
     });
 
-    await page.goto(nmurl, { waitUntil: "networkidle2" });
+    await page.goto(nmurl, { waitUntil: "networkidle2", timeout: 300000 });
     await browser.close();
 
     return itemsArray;
   } catch (error) {
-    console.error(`Error scraping ${nmurl}:, error`);
+    console.error(`Error scraping ${nmurl}:, error : ${error}`);
     return [];
   }
 }
@@ -276,7 +298,6 @@ async function startScrapingProcess() {
       }
 
       const items = await scrapeNMURL(item.NMURL);
-
       if (items.length > 0) {
         // Checking if "updated" time is before 30 days
         for (const itm of items) {
