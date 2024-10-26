@@ -18,7 +18,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Flowcharts
 
-![Merukari Sold Counter - v1 3 0 drawio](https://github.com/user-attachments/assets/6fefe60e-4aa1-400b-8899-10cec2adcc49)
+![Merukari Sold Counter - v1 3 0 drawio (2)](https://github.com/user-attachments/assets/8e2df185-f95f-4f91-90d3-9dec015271c3)
 
 ## Explanation videos
 
@@ -98,7 +98,13 @@ pnpm run start
 
 ### entities:search
 
+#### items
+
 ![Merukari-List-Item-JSON](https://github.com/user-attachments/assets/9d0bbbfe-4186-442c-9a9a-e05f070bc35a)
+
+#### searchCondition
+
+![Merukari-List-SearchCondition](https://github.com/user-attachments/assets/fab9a0dd-0d20-4c4d-9a93-bc2afaf0c269)
 
 # Future Work
 
