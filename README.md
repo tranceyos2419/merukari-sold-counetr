@@ -18,7 +18,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Flowcharts
 
-![Merukari Sold Counter - v1 3 0](https://drive.google.com/file/d/1GB0HpZG3jamRdNlF8lOTOQuEh3d5tQS-/view?usp=sharing)
+![Merukari Sold Counter - v1 3 0 drawio](https://github.com/user-attachments/assets/6fefe60e-4aa1-400b-8899-10cec2adcc49)
 
 ## Explanation videos
 
