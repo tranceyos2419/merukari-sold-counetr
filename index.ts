@@ -140,7 +140,7 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
     ]
 
     const browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       defaultViewport: null,
       args
     })
@@ -155,7 +155,7 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
 
     page.on("response", async (response) => {
       const requestUrl = response.url();
-      
+
       if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
         try {
           const jsonResponse = await response.json();

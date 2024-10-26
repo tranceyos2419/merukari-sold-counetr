@@ -6,6 +6,7 @@ Scrapping data on Merukari and export a CSV file<br>
 # Contents
 
 - [Specification](#Specification)
+- [Implementation](#Implementation)
 - [Branch](#branch)
 - [Installation](#installation)
 - [Development setup](#development-setup)
@@ -15,11 +16,9 @@ Scrapping data on Merukari and export a CSV file<br>
 
 # Specification
 
-## Version 1.2.0 - URL Adaption: Condition_id based
-
 ## Flowcharts
 
-![Merukari Sold Counter - v1 2 0 drawio drawio](https://github.com/user-attachments/assets/a95e8d23-5a4d-489a-9827-523ec1b80daf)
+![Merukari Sold Counter - v1 3 0](https://drive.google.com/file/d/1GB0HpZG3jamRdNlF8lOTOQuEh3d5tQS-/view?usp=sharing)
 
 ## Explanation videos
 
@@ -28,6 +27,35 @@ Scrapping data on Merukari and export a CSV file<br>
 ## Examples I/O files
 
 ### [Example file 01](https://docs.google.com/spreadsheets/d/1SaieguLxp8nrFzjSr-qKWCcD1woiba4h2VKBL_SipwY/edit?usp=sharing)<br>
+
+# Implementation
+
+[Output]
+
+- Fixing an issue that MSC becomes 0 after running more than about 100 rows
+- Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
+- Implementing MMP
+- Implementing pmin
+- Implementing kws & kwsTitle
+- Implementing kwes & kwesTitle
+
+* Output file has contain the same number of rows in the same order as the input file
+
+  [Data-Handling]
+
+- Realtime saving (Saving data each time we scrape)
+- When we restart the tool, re-start from the last saving data
+
+[Utility]
+
+- Proxy Integration
+
+[Code]
+
+- Organizing the data layer
+  - Convert if sentences into shorthand
+  - Organize functions into separated files
+  - Implement in a way that it's easier to see the correspondence between headers and values
 
 # Branch
 
@@ -64,7 +92,7 @@ pnpm run start
 
 ### Proxy solutions
 
-- [scrape.do](https://scrape.do/)
+- [Smartproxy](https://smartproxy.com/)
 
 # Reference
 

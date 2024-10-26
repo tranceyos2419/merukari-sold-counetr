@@ -2,19 +2,10 @@
 
 ### Modification
 
-- Implementing kws & kwsTitle
-- Implementing kwes & kwesTitle
-- Implementing pmin
-- Organizing the data layer
-
 ### Question
 
 ### Future work
 
-- Convert if sentences into shorthand
-
-- Organize functions into separated files
-
-- Implement in a way that it's easier to see the correspondence between headers and values
-
 ### Memo
+
+The input of max has to be blank for price_max=19105 to work in the search
