@@ -1,5 +1,7 @@
 # Merukari Sold Counter
 
+## This is an on-going project. Some features have been implemented. Please look at \*.ts files to know the current state
+
 Scrapping data on Merukari and export a CSV file<br>
 ➡️ Website to scrapse: [Merukari](https://jp.mercari.com)
 
