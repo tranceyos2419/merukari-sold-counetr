@@ -22,7 +22,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Explanation videos
 
-### [Explanation video 01](https://youtu.be/Gf6RnYR1SnI) <br>
+### [Explanation video 01](https://youtu.be/OArhNWXB8QE) <br>
 
 ## Examples I/O files
 
@@ -104,7 +104,7 @@ pnpm run start
 
 #### searchCondition
 
-![Merukari-List-SearchCondition](https://github.com/user-attachments/assets/fab9a0dd-0d20-4c4d-9a93-bc2afaf0c269)
+![CleanShot 2024-10-26 at 19 22 42@2x](https://github.com/user-attachments/assets/d89c9333-e1dc-4216-a820-7f35f5d937af)
 
 # Future Work
 
