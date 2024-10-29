@@ -140,12 +140,13 @@ async function main() {
         }
       }
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${MSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${MSC} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const outputData: CSVOutput = {
         ...item,
         NMURL,
         MSC,
+        MMP: scrapedCondition.priceMax, //temp
         name,
         switchAll: 'TRUE',
         kws: scrapedCondition.keyword,
