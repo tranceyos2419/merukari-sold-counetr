@@ -4,7 +4,8 @@ import path from "path";
 import Papa from 'papaparse';
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { CSVInput, CSVOutput, ScrapedItem } from "./interfaces";
+import { CSVInput, CSVOutput, ScrapedCondition, ScrapedItem } from "./interfaces";
+import launchUniqueBrowser from "./browser";
 
 puppeteer.use(StealthPlugin());
 dotenv.config();
@@ -60,71 +61,6 @@ function modifyNMURL(omurl: string, sp: number): string {
   return url.toString();
 }
 
-// Scrape data
-async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
-  const itemsArray: ScrapedItem[] = [];
-  const processedItemIds = new Set<string>();
-  try {
-    let args = [
-      '--disable-blink-features=AutomationControlled',
-      "--disable-webgl",
-      "--disable-webrtc",
-      "--disable-dev-shm-usage",
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--window-size=375,667"
-    ]
-
-    const browser = await puppeteer.launch({
-      headless: true,
-      defaultViewport: null,
-      args
-    })
-
-    const page = await browser.newPage();
-
-    // const [res] = await Promise.all([
-    //   page.waitForResponse(res => res.url() === "https://api.mercari.jp/v2/entities:search", {timeout: 90_000}),
-    //   page.goto(nmurl, {waitUntil: "domcontentloaded"}),
-    // ]);
-    // console.log("response::",await res.json());
-
-    page.on("response", async (response) => {
-      const requestUrl = response.url();
-
-      if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
-        try {
-          const jsonResponse = await response.json();
-          const items: ScrapedItem[] = jsonResponse.items.filter(
-            (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
-          );
-
-          // Filter out duplicates
-          items.forEach((item: ScrapedItem) => {
-            if (!processedItemIds.has(item.id)) {
-              processedItemIds.add(item.id);
-              itemsArray.push({
-                ...item,
-                updated: convertTimestampToDate(item.updated),
-              });
-            }
-          });
-        } catch (error) {
-          console.warn("Issue parsing JSON response " + error);
-        }
-      }
-    });
-
-    await page.goto(nmurl, { waitUntil: "networkidle2", timeout: 300000 });
-    await browser.close();
-
-    return itemsArray;
-  } catch (error) {
-    console.error(`Error scraping ${nmurl}:, error : ${error}`);
-    return [];
-  }
-}
-
 function millisToMinutesAndSeconds(millis: number) {
   var minutes = Math.floor(millis / 60000);
   var seconds = ((millis % 60000) / 1000);
@@ -136,7 +72,6 @@ function millisToMinutesAndSeconds(millis: number) {
 }
 
 
-
 // Initiate the scraping process
 async function main() {
   try {
@@ -145,10 +80,55 @@ async function main() {
 
     for (const item of csvData) {
       item.NMURL = modifyNMURL(item.OMURL, item.SP);
-      const pmax = parseFloat(item.SP.toString().replace(/[^\d.-]/g, ""))
+      const products: ScrapedItem[] = [];
+      const productsId = new Set<string>();
 
-      const products = await scrapeNMURL(item.NMURL);
+      let scrapedCondition: ScrapedCondition = {
+        keyword: "",
+        excludeKeyword: "",
+        priceMin: NaN,
+        priceMax: NaN,
+      }
 
+      const { browser, page } = await launchUniqueBrowser();
+
+      // Get parameters from entities:search json
+      page.on("response", async (response) => {
+        const requestUrl = response.url();
+        if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
+          try {
+            const jsonResponse = await response.json();
+
+            const items: ScrapedItem[] = jsonResponse.items.filter(
+              (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
+            );
+
+            // Filter out duplicates
+            items.forEach((item: ScrapedItem) => {
+              if (!productsId.has(item.id)) {
+                productsId.add(item.id);
+                products.push({
+                  ...item,
+                  updated: convertTimestampToDate(item.updated),
+                });
+              }
+            });
+
+            // Get search condition
+            scrapedCondition = jsonResponse.searchCondition;
+            scrapedCondition.keyword = scrapedCondition.keyword.split(" ").filter(part => part !== "").join(",");
+            scrapedCondition.excludeKeyword = scrapedCondition.excludeKeyword.split(" ").filter(part => part !== "").join("|");
+
+          } catch (error) {
+            console.warn("Issue parsing JSON response " + error);
+          }
+        }
+      });
+
+      await page.goto(item.NMURL, { waitUntil: "networkidle2", timeout: 300000 });
+      await browser.close();
+
+      // Calculate MSC
       if (products.length > 0) {
         item.MSC = 0;
         // Checking if "updated" time is before 30 days
@@ -156,26 +136,27 @@ async function main() {
           const itemUpdatedDate = new Date(product.updated);
           if (itemUpdatedDate >= comparisonDate) {
             item.MSC = item.MSC + 1;
-
           }
         }
       }
 
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${item.MSC}`;
+
       const outputData: CSVOutput = {
         ...item,
-        name: item.Keyword, // temp
+        name: name,
         switchAll: 'TRUE',
-        kws: item.Keyword, // temp
-        kwes: item.Keyword, // temp
-        pmin: 0,//temp
-        pmax: pmax,
+        kws: scrapedCondition.keyword,
+        kwes: scrapedCondition.excludeKeyword,
+        pmin: scrapedCondition.priceMin,
+        pmax: scrapedCondition.priceMax,
         sve: undefined,
         nickname: undefined,
         nicknameExs: undefined,
         itemStatuses: '2,3,4,5',
         freeShipping: undefined,
-        kwsTitle: item.Keyword,
-        kwesTitle: item.Keyword,
+        kwsTitle: scrapedCondition.keyword,
+        kwesTitle: scrapedCondition.excludeKeyword,
         autoBuy: 'FALSE',
         gotoBuy: 'FALSE',
         type: 'normal',

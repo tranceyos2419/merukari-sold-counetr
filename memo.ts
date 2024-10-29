@@ -151,6 +151,78 @@
 //   }
 // }
 
+
+//# Scrape data
+// async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
+//   const itemsArray: ScrapedItem[] = [];
+//   const processedItemIds = new Set<string>();
+//   try {
+//     let args = [
+//       '--disable-blink-features=AutomationControlled',
+//       "--disable-webgl",
+//       "--disable-webrtc",
+//       "--disable-dev-shm-usage",
+//       "--no-sandbox",
+//       "--disable-setuid-sandbox",
+//       "--window-size=375,667"
+//     ]
+
+//     const browser = await puppeteer.launch({
+//       headless: true,
+//       defaultViewport: null,
+//       args
+//     })
+
+//     const page = await browser.newPage();
+
+//     // const [res] = await Promise.all([
+//     //   page.waitForResponse(res => res.url() === "https://api.mercari.jp/v2/entities:search", {timeout: 90_000}),
+//     //   page.goto(nmurl, {waitUntil: "domcontentloaded"}),
+//     // ]);
+//     // console.log("response::",await res.json());
+
+//     page.on("response", async (response) => {
+//       const requestUrl = response.url();
+
+//       if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
+//         try {
+//           const jsonResponse = await response.json();
+//           console.log(JSON.stringify(jsonResponse));
+//           const items: ScrapedItem[] = jsonResponse.items.filter(
+//             (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
+//           );
+
+//           // Filter out duplicates
+//           items.forEach((item: ScrapedItem) => {
+//             if (!processedItemIds.has(item.id)) {
+//               processedItemIds.add(item.id);
+//               itemsArray.push({
+//                 ...item,
+//                 updated: convertTimestampToDate(item.updated),
+//               });
+//             }
+//           });
+
+
+
+//         } catch (error) {
+//           console.warn("Issue parsing JSON response " + error);
+//         }
+//       }
+//     });
+
+//     await page.goto(nmurl, { waitUntil: "networkidle2", timeout: 300000 });
+//     await browser.close();
+
+//     return itemsArray;
+//   } catch (error) {
+//     console.error(`Error scraping ${nmurl}:, error : ${error}`);
+//     return [];
+//   }
+// }
+
+
+
 //# main logic
 // MSC
 // Increasing MSC of the item

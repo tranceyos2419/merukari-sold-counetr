@@ -50,3 +50,10 @@ export interface ScrapedItem {
   status: string;
   updated: string;
 }
+
+export interface ScrapedCondition {
+  keyword: string;
+  excludeKeyword: string;
+  priceMin: number;
+  priceMax: number;
+}

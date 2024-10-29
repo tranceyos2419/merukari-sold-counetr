@@ -1,0 +1,45 @@
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import UserAgent from "user-agents";
+
+puppeteer.use(StealthPlugin());
+
+//# To debug ip rotating from proxy
+// async function getCurrentIP(page) {
+//   await page.goto('https://api.ipify.org');
+//   const ip = await page.evaluate(() => document.body.innerText);
+//   console.log(`Current IP: ${ip}`);
+//   return ip;
+// }
+
+const launchUniqueBrowser = async (
+) => {
+  const isProxyActive = process.env.IS_PROXY_ACTIVE === 'true';
+  const args = [
+    '--disable-blink-features=AutomationControlled',
+    "--disable-webgl",
+    "--disable-webrtc",
+    "--disable-dev-shm-usage",
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--window-size=375,667"
+  ]
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    defaultViewport: null,
+    args
+  })
+
+  const page = await browser.newPage();
+
+  const agent = new UserAgent();
+  await page.setUserAgent(agent.toString());
+
+  //# To Check the IP address of the proxy
+  // const currentIP = await getCurrentIP(page);
+
+  return { browser, page }
+}
+
+export default launchUniqueBrowser
