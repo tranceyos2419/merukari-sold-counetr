@@ -1,19 +1,38 @@
 import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import csv from "csv-parser";
+import Papa from 'papaparse';
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { CSVInput, ScrapedItem } from "./interfaces";
+import { CSVInput, CSVOutput, ScrapedItem } from "./interfaces";
 
 puppeteer.use(StealthPlugin());
-
 dotenv.config();
 
-const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
-const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
+const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
+const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 
-// Interface for CSV row data
+
+const readData = (filePath: string): CSVInput[] | CSVOutput[] => {
+  let parsedData: CSVInput[] | CSVOutput[] = [];
+  try {
+    const csvData = fs.readFileSync(filePath, "utf-8");
+    parsedData = Papa.parse(csvData, {
+      header: true,
+      skipEmptyLines: true,
+    }).data;
+  } catch (err) {
+    console.error(`Reading an input file: ${err}`);
+  }
+  console.log(`Read data from: ${filePath}`);
+  return parsedData;
+};
+
+const saveData = (filePath: string, data: CSVOutput[]) => {
+  const finalData = Papa.unparse(data);
+  fs.writeFileSync(filePath, finalData);
+  console.log(`Saved data to: ${filePath} `);
+};
 
 // Function to get the date 30 days ago
 function getDate30DaysAgo(): string {
@@ -25,8 +44,11 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
-const date30daysBefore = getDate30DaysAgo();
-const comparisonDate = new Date(date30daysBefore);
+// Convert Unix timestamp to ISO date format
+function convertTimestampToDate(timestamp: string): string {
+  const date = new Date(parseInt(timestamp, 10) * 1000);
+  return date.toISOString();
+}
 
 // Modify NMURL based on parameters
 function modifyNMURL(omurl: string, sp: number): string {
@@ -36,76 +58,6 @@ function modifyNMURL(omurl: string, sp: number): string {
   url.searchParams.set("order", "desc");
   url.searchParams.set("sort", "created_time");
   return url.toString();
-}
-
-// Convert Unix timestamp to ISO date format
-function convertTimestampToDate(timestamp: string): string {
-  const date = new Date(parseInt(timestamp, 10) * 1000);
-  return date.toISOString();
-}
-
-// Read CSV file
-async function readCSVFile(filePath: string): Promise<CSVInput[]> {
-  return new Promise((resolve, reject) => {
-    const results: CSVInput[] = [];
-    let rowNumber = 0;
-
-    if (!fs.existsSync(filePath)) {
-      return reject(new Error(`File not found: ${filePath}`));
-    }
-
-    const fileStream = fs.createReadStream(filePath);
-
-    // Use csv-parser as a cursor to process each row
-    const csvStream = fileStream.pipe(csv({ separator: "," }));
-
-    csvStream
-      .on("data", (row) => {
-        rowNumber++;
-
-        try {
-          const keyword = row["Keyword"]?.trim();
-          const identity = row["Identity"]?.trim();
-          const omurl = row["OMURL"]?.trim();
-          const sp = row["SP"]?.trim();
-          const msc = row["MSC"]?.trim() || "0";
-
-          // Check if essential fields exist
-          if (!keyword || !identity || !omurl || !sp) {
-            console.log(
-              `Row ${rowNumber} skipped due to missing fields: ${JSON.stringify(
-                row
-              )}
-            `);
-            return;
-          }
-
-          // Convert price (S.P.) and MSC to numbers
-          const price = parseFloat(sp.replace(/[^\d.-]/g, ""));
-          const mscNumber = parseFloat(msc);
-
-          if (isNaN(price)) {
-            console.log(`Row ${rowNumber} skipped due to invalid price: ${sp}`);
-            return;
-          }
-
-          const processedRow: CSVInput = {
-            Keyword: keyword,
-            Identity: identity,
-            OMURL: omurl,
-            SP: price,
-            MSC: isNaN(mscNumber) ? 0 : mscNumber,
-            NMURL: modifyNMURL(omurl, price),
-          };
-
-          results.push(processedRow);
-        } catch (error) {
-          console.error(`Error processing row ${rowNumber}: ${error.message}`);
-        }
-      })
-      .on("end", () => resolve(results))
-      .on("error", (err) => reject(err));
-  });
 }
 
 // Scrape data
@@ -173,53 +125,6 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
   }
 }
 
-// Function to get min price from the URL
-function getMinPriceFromURL(url: string) {
-  const params = new URL(url).searchParams;
-  return params.get("price_min");
-}
-
-// Function to get max price from the URL
-function getMaxPriceFromURL(url: string) {
-  const params = new URL(url).searchParams;
-  return params.get("price_max");
-}
-
-function separateByCommas(url: string): string | null {
-  try {
-    const parsedUrl = new URL(url);
-    const keyword = parsedUrl.searchParams.get('keyword');
-
-    if (keyword) {
-      const components = keyword.split(" ").filter(part => part !== "");
-      return components.join(",");
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error('Invalid URL:', error);
-    return null;
-  }
-}
-
-function decodeExcludeKeyword(urlString: string): string | null {
-  try {
-    const parsedUrl = new URL(urlString);
-    const excludeKeyword = parsedUrl.searchParams.get('exclude_keyword');
-
-    const decodedKeyword = excludeKeyword ? decodeURIComponent(excludeKeyword) : null;
-    if (decodedKeyword) {
-      const components = decodedKeyword.split(" ").filter(part => part !== "");
-      return components.join("|");
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Invalid URL:', error);
-    return null;
-  }
-}
-
 function millisToMinutesAndSeconds(millis: number) {
   var minutes = Math.floor(millis / 60000);
   var seconds = ((millis % 60000) / 1000);
@@ -231,79 +136,70 @@ function millisToMinutesAndSeconds(millis: number) {
 }
 
 
-// Save updated data back to a new CSV file (output.csv)
-function saveCSVFile(filePath: string, data: CSVInput[]): void {
-  const headers = [
-    "Keyword", "Identity", "OMURL", "SP", "NMURL", "MSC", "name", "switchAll",
-    "kws", "kwes", "pmin", "pmax", "sve", "nickname", "nicknameExs",
-    "itemStatuses", "freeShipping", "kwsTitle", "kwesTitle", "autoBuy",
-    "gotoBuy", "type", "target", "category", "size", "brand", "sellerId",
-    "sellerIdExs", "notificationCnt", "receiveCnt", "openCnt", "buyCnt",
-    "buyPrice", "autoBuyTryCnt", "autoBuySuccessCnt", "autoMoveTryCnt",
-    "autoMoveSuccessCnt", "tags", "memo"
-  ];
-  const csvContent = [
-    headers.join(","),
-    ...data.map((item) =>
-      [
-        item.Keyword, item.Identity, item.OMURL, item.SP, item.NMURL, item.MSC,
-        `${item.Identity} | ${item.Keyword} | SP: ${item.SP} | MSC: ${item.MSC}`, true,
-        `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, getMinPriceFromURL(item.NMURL), getMaxPriceFromURL(item.NMURL),
-        " ",
-        "", " ", '"2,3,4,5"', " ",
-        `"${separateByCommas(item.NMURL)}"`, `"${decodeExcludeKeyword(item.NMURL)}"`, false, false, "normal",
-        " ", " ", " ", " ",
-        " ", " ", 0, 0,
-        0, " ", " ", 0,
-        0, 0, 0,
-        item.Identity, item.NMURL,
-      ].join(
-        ","
-      )
-    ),
-  ].join("\n");
-
-  try {
-    fs.writeFileSync(filePath, csvContent, "utf8");
-    console.log(`CSV file saved successfully as ${filePath}.`);
-  } catch (error) {
-    console.error("Error writing CSV file:", error);
-  }
-}
 
 // Initiate the scraping process
-async function startScrapingProcess() {
+async function main() {
   try {
-    const csvData = await readCSVFile(INPUT_FILE_PATH);
-    for (const item of csvData) {
-      // Formatting NMURL
-      if (!item.NMURL.includes("price_max") || !item.NMURL.includes("status")) {
-        item.NMURL = modifyNMURL(item.OMURL, item.SP);
-      }
+    const csvData = await readData(INPUT_FILE_PATH) as CSVInput[];
+    const outputDataSet: CSVOutput[] = [];
 
-      const items = await scrapeNMURL(item.NMURL);
-      if (items.length > 0) {
+    for (const item of csvData) {
+      item.NMURL = modifyNMURL(item.OMURL, item.SP);
+      const pmax = parseFloat(item.SP.toString().replace(/[^\d.-]/g, ""))
+
+      const products = await scrapeNMURL(item.NMURL);
+
+      if (products.length > 0) {
+        item.MSC = 0;
         // Checking if "updated" time is before 30 days
-        for (const itm of items) {
-          const itemUpdatedDate = new Date(itm.updated);
-          if (
-            itemUpdatedDate >= comparisonDate &&
-            itemUpdatedDate <= new Date()
-          ) {
-            // Increasing MSC of the item
-            const index = csvData.findIndex(
-              (csvItem) => csvItem.Identity === item.Identity
-            );
-            if (index > -1) {
-              csvData[index].MSC += 1;
-            }
+        for (const product of products) {
+          const itemUpdatedDate = new Date(product.updated);
+          if (itemUpdatedDate >= comparisonDate) {
+            item.MSC = item.MSC + 1;
+
           }
         }
       }
-      console.log(`Processed NMURL for ${item.Identity}`);
+
+      const outputData: CSVOutput = {
+        ...item,
+        name: item.Keyword, // temp
+        switchAll: 'TRUE',
+        kws: item.Keyword, // temp
+        kwes: item.Keyword, // temp
+        pmin: 0,//temp
+        pmax: pmax,
+        sve: undefined,
+        nickname: undefined,
+        nicknameExs: undefined,
+        itemStatuses: '2,3,4,5',
+        freeShipping: undefined,
+        kwsTitle: item.Keyword,
+        kwesTitle: item.Keyword,
+        autoBuy: 'FALSE',
+        gotoBuy: 'FALSE',
+        type: 'normal',
+        target: undefined,
+        category: undefined,
+        size: undefined,
+        brand: undefined,
+        sellerId: undefined,
+        sellerIdExs: undefined,
+        notificationCnt: 0,
+        receiveCnt: 0,
+        openCnt: 0,
+        buyCnt: undefined,
+        buyPrice: undefined,
+        autoBuyTryCnt: 0,
+        autoBuySuccessCnt: 0,
+        autoMoveTryCnt: 0,
+        autoMoveSuccessCnt: 0,
+        tags: item.Identity,
+        memo: item.OMURL
+      }
+      outputDataSet.push(outputData);
     }
-    // Save results to output.csv
-    saveCSVFile(OUTPUT_FILE_PATH, csvData);
+    saveData(OUTPUT_FILE_PATH, outputDataSet);
   } catch (error) {
     console.error("Error during the scraping process:", error);
   }
@@ -311,8 +207,10 @@ async function startScrapingProcess() {
 
 console.log("This app is in Action");
 const startTime = performance.now()
+const date30daysBefore = getDate30DaysAgo();
+const comparisonDate = new Date(date30daysBefore);
 
-startScrapingProcess(); // main logic
+main(); // main logic
 
 const endTime = performance.now()
 console.log(`This Execution took ${millisToMinutesAndSeconds(endTime - startTime)}`)
