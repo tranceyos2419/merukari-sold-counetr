@@ -4,6 +4,7 @@ import path from "path";
 import csv from "csv-parser";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { CSVInput, ScrapedItem } from "./interfaces";
 
 puppeteer.use(StealthPlugin());
 
@@ -13,22 +14,6 @@ const INPUT_FILE_PATH = path.resolve(__dirname, "input.csv");
 const OUTPUT_FILE_PATH = path.resolve(__dirname, "output.csv");
 
 // Interface for CSV row data
-interface CSVRow {
-  Keyword: string;
-  Identity: string;
-  OMURL: string;
-  SP: number;
-  NMURL: string;
-  MSC: number;
-}
-
-// Interface for scraped item data
-interface ScrapedItem {
-  id: string;
-  name: string;
-  status: string;
-  updated: string;
-}
 
 // Function to get the date 30 days ago
 function getDate30DaysAgo(): string {
@@ -60,9 +45,9 @@ function convertTimestampToDate(timestamp: string): string {
 }
 
 // Read CSV file
-async function readCSVFile(filePath: string): Promise<CSVRow[]> {
+async function readCSVFile(filePath: string): Promise<CSVInput[]> {
   return new Promise((resolve, reject) => {
-    const results: CSVRow[] = [];
+    const results: CSVInput[] = [];
     let rowNumber = 0;
 
     if (!fs.existsSync(filePath)) {
@@ -104,7 +89,7 @@ async function readCSVFile(filePath: string): Promise<CSVRow[]> {
             return;
           }
 
-          const processedRow: CSVRow = {
+          const processedRow: CSVInput = {
             Keyword: keyword,
             Identity: identity,
             OMURL: omurl,
@@ -136,7 +121,6 @@ async function scrapeNMURL(nmurl: string): Promise<ScrapedItem[]> {
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--window-size=375,667"
-      // "--v=1"
     ]
 
     const browser = await puppeteer.launch({
@@ -248,7 +232,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
 
 // Save updated data back to a new CSV file (output.csv)
-function saveCSVFile(filePath: string, data: CSVRow[]): void {
+function saveCSVFile(filePath: string, data: CSVInput[]): void {
   const headers = [
     "Keyword", "Identity", "OMURL", "SP", "NMURL", "MSC", "name", "switchAll",
     "kws", "kwes", "pmin", "pmax", "sve", "nickname", "nicknameExs",
