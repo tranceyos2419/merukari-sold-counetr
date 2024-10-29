@@ -73,7 +73,12 @@ function millisToMinutesAndSeconds(millis: number) {
 
 
 // Initiate the scraping process
-async function main() {
+(async () => {
+  console.log("This app is in Action");
+  const startTime = performance.now()
+  const date30daysBefore = getDate30DaysAgo();
+  const comparisonDate = new Date(date30daysBefore);
+
   try {
     const csvData = await readData(INPUT_FILE_PATH) as CSVInput[];
     const outputDataSet: CSVOutput[] = [];
@@ -186,15 +191,8 @@ async function main() {
     saveData(OUTPUT_FILE_PATH, outputDataSet);
   } catch (error) {
     console.error("Error during the scraping process:", error);
+  } finally {
   }
-}
-
-console.log("This app is in Action");
-const startTime = performance.now()
-const date30daysBefore = getDate30DaysAgo();
-const comparisonDate = new Date(date30daysBefore);
-
-main(); // main logic
-
-const endTime = performance.now()
-console.log(`This Execution took ${millisToMinutesAndSeconds(endTime - startTime)}`)
+  const endTime = performance.now()
+  console.log(`This Execution took ${millisToMinutesAndSeconds(endTime - startTime)}`)
+})()
