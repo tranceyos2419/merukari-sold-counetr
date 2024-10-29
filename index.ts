@@ -79,7 +79,8 @@ async function main() {
     const outputDataSet: CSVOutput[] = [];
 
     for (const item of csvData) {
-      item.NMURL = modifyNMURL(item.OMURL, item.SP);
+      const NMURL = modifyNMURL(item.OMURL, item.SP);
+      let MSC = 0;
       const products: ScrapedItem[] = [];
       const productsId = new Set<string>();
 
@@ -125,26 +126,27 @@ async function main() {
         }
       });
 
-      await page.goto(item.NMURL, { waitUntil: "networkidle2", timeout: 300000 });
+      await page.goto(NMURL, { waitUntil: "networkidle2", timeout: 300000 });
       await browser.close();
 
       // Calculate MSC
       if (products.length > 0) {
-        item.MSC = 0;
         // Checking if "updated" time is before 30 days
         for (const product of products) {
           const itemUpdatedDate = new Date(product.updated);
           if (itemUpdatedDate >= comparisonDate) {
-            item.MSC = item.MSC + 1;
+            MSC = MSC + 1;
           }
         }
       }
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${item.MSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${MSC}`;
 
       const outputData: CSVOutput = {
         ...item,
-        name: name,
+        NMURL,
+        MSC,
+        name,
         switchAll: 'TRUE',
         kws: scrapedCondition.keyword,
         kwes: scrapedCondition.excludeKeyword,

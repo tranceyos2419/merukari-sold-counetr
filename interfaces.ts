@@ -3,10 +3,11 @@ export interface CSVInput {
   Identity: string;
   OMURL: string;
   SP: number;
-  NMURL: string;
-  MSC: number;
+
 }
 export interface CSVOutput extends CSVInput {
+  NMURL: string;
+  MSC: number;
   name: string;
   switchAll: string;
   kws: string;
