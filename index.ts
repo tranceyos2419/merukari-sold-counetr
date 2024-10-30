@@ -162,7 +162,7 @@ function millisToMinutesAndSeconds(millis: number) {
       }
 
       MMP = calculateMedian(prices)
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP} | FMP:${item.FMP} | TSC:${item.TSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const outputData: CSVOutput = {
         ...item,
