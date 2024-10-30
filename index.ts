@@ -103,6 +103,7 @@ function millisToMinutesAndSeconds(millis: number) {
       let exclusiveKeyword = "";
       let priceMin = NaN;
       let priceMax = NaN;
+      let prices: number[] = []
 
       const NMURL = modifyNMURL(item.OMURL, item.SP);
 
@@ -130,8 +131,6 @@ function millisToMinutesAndSeconds(millis: number) {
               }
             });
 
-            let prices = items.map(item => parseInt(item.price))
-            MMP = calculateMedian(prices)
 
             // Get search condition
             const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
@@ -156,11 +155,13 @@ function millisToMinutesAndSeconds(millis: number) {
         for (const product of products) {
           const itemUpdatedDate = new Date(product.updated);
           if (itemUpdatedDate >= comparisonDate) {
+            prices.push(parseInt(product.price))
             MSC = MSC + 1;
           }
         }
       }
 
+      MMP = calculateMedian(prices)
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const outputData: CSVOutput = {
