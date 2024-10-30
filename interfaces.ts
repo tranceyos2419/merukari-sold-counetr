@@ -51,6 +51,7 @@ export interface CSVOutput extends CSVInput {
 export interface ScrapedItem {
   id: string;
   name: string;
+  price: number;
   status: string;
   updated: string;
 }

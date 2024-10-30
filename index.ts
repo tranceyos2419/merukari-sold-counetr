@@ -61,6 +61,29 @@ function modifyNMURL(omurl: string, sp: number): string {
   return url.toString();
 }
 
+export const calculateMedian = (numbers: number[]): number => {
+
+  const sorted = Array.from(numbers).sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+
+  console.log(`sorted: ${sorted}`)
+  console.log(`middle: ${middle}`)
+  if (sorted.length % 2 === 0) {
+    // return Math.floor((sorted[middle - 1] + sorted[middle]) / 2);
+    const firstValue = sorted[middle - 1];
+    const secondValue = sorted[middle];
+    const sum = parseInt(firstValue.toString()) + parseInt(secondValue.toString());
+    const median = Math.floor(sum / 2);
+
+    console.log(`firstValue: ${firstValue}`)
+    console.log(`secondValue: ${secondValue}`)
+    console.log(`sum: ${sum}`)
+
+    return median;
+  }
+  return sorted[middle];
+}
+
 function millisToMinutesAndSeconds(millis: number) {
   var minutes = Math.floor(millis / 60000);
   var seconds = ((millis % 60000) / 1000);
@@ -86,6 +109,7 @@ function millisToMinutesAndSeconds(millis: number) {
     for (const item of csvData) {
       const NMURL = modifyNMURL(item.OMURL, item.SP);
       let MSC = 0;
+      let MMP = 0;
       const products: ScrapedItem[] = [];
       const productsId = new Set<string>();
 
@@ -120,6 +144,10 @@ function millisToMinutesAndSeconds(millis: number) {
               }
             });
 
+            let prices = items.map(item => item.price)
+            MMP = calculateMedian(prices)
+            console.log(`MMP: ${MMP}`)
+
             // Get search condition
             scrapedCondition = jsonResponse.searchCondition;
             scrapedCondition.keyword = scrapedCondition.keyword.split(" ").filter(part => part !== "").join(",");
@@ -151,7 +179,7 @@ function millisToMinutesAndSeconds(millis: number) {
         ...item,
         NMURL,
         MSC,
-        MMP: scrapedCondition.priceMax, //temp
+        MMP, //temp
         name,
         switchAll: 'TRUE',
         kws: scrapedCondition.keyword,
