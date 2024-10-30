@@ -59,6 +59,6 @@ export interface ScrapedItem {
 export interface ScrapedCondition {
   keyword: string;
   excludeKeyword: string;
-  priceMin: number;
-  priceMax: number;
+  priceMin: string;
+  priceMax: string;
 }

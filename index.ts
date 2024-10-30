@@ -95,18 +95,16 @@ function millisToMinutesAndSeconds(millis: number) {
     const outputDataSet: CSVOutput[] = [];
 
     for (const item of csvData) {
-      const NMURL = modifyNMURL(item.OMURL, item.SP);
-      let MSC = 0;
-      let MMP = 0;
       const products: ScrapedItem[] = [];
       const productsId = new Set<string>();
+      let MSC = 0;
+      let MMP = 0;
+      let keyword = "";
+      let exclusiveKeyword = "";
+      let priceMin = NaN;
+      let priceMax = NaN;
 
-      let scrapedCondition: ScrapedCondition = {
-        keyword: "",
-        excludeKeyword: "",
-        priceMin: NaN,
-        priceMax: NaN,
-      }
+      const NMURL = modifyNMURL(item.OMURL, item.SP);
 
       const { browser, page } = await launchUniqueBrowser();
 
@@ -134,12 +132,14 @@ function millisToMinutesAndSeconds(millis: number) {
 
             let prices = items.map(item => parseInt(item.price))
             MMP = calculateMedian(prices)
-            console.log(`MMP: ${MMP}`)
 
             // Get search condition
-            scrapedCondition = jsonResponse.searchCondition;
-            scrapedCondition.keyword = scrapedCondition.keyword.split(" ").filter(part => part !== "").join(",");
-            scrapedCondition.excludeKeyword = scrapedCondition.excludeKeyword.split(" ").filter(part => part !== "").join("|");
+            const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
+            keyword = scrapedCondition.keyword.split(" ").filter(part => part !== "").join(",");
+            exclusiveKeyword = scrapedCondition.excludeKeyword.split(" ").filter(part => part !== "").join("|");
+            priceMin = parseInt(scrapedCondition.priceMin)
+            priceMax = parseInt(scrapedCondition.priceMax)
+
 
           } catch (error) {
             console.warn("Issue parsing JSON response " + error);
@@ -161,26 +161,26 @@ function millisToMinutesAndSeconds(millis: number) {
         }
       }
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC: ${MSC} | FMP:${item.FMP} | TSC:${item.TSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const outputData: CSVOutput = {
         ...item,
         NMURL,
         MSC,
-        MMP, //temp
+        MMP,
         name,
         switchAll: 'TRUE',
-        kws: scrapedCondition.keyword,
-        kwes: scrapedCondition.excludeKeyword,
-        pmin: scrapedCondition.priceMin,
-        pmax: scrapedCondition.priceMax,
+        kws: keyword,
+        kwes: exclusiveKeyword,
+        pmin: priceMin,
+        pmax: priceMax,
         sve: undefined,
         nickname: undefined,
         nicknameExs: undefined,
         itemStatuses: '2,3,4,5',
         freeShipping: undefined,
-        kwsTitle: scrapedCondition.keyword,
-        kwesTitle: scrapedCondition.excludeKeyword,
+        kwsTitle: keyword,
+        kwesTitle: exclusiveKeyword,
         autoBuy: 'FALSE',
         gotoBuy: 'FALSE',
         type: 'normal',
