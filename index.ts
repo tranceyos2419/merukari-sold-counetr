@@ -62,25 +62,13 @@ function modifyNMURL(omurl: string, sp: number): string {
 }
 
 export const calculateMedian = (numbers: number[]): number => {
-
   const sorted = Array.from(numbers).sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
 
-  console.log(`sorted: ${sorted}`)
-  console.log(`middle: ${middle}`)
   if (sorted.length % 2 === 0) {
-    // return Math.floor((sorted[middle - 1] + sorted[middle]) / 2);
-    const firstValue = sorted[middle - 1];
-    const secondValue = sorted[middle];
-    const sum = parseInt(firstValue.toString()) + parseInt(secondValue.toString());
-    const median = Math.floor(sum / 2);
-
-    console.log(`firstValue: ${firstValue}`)
-    console.log(`secondValue: ${secondValue}`)
-    console.log(`sum: ${sum}`)
-
-    return median;
+    return (sorted[middle - 1] + sorted[middle]) / 2;
   }
+
   return sorted[middle];
 }
 
@@ -144,7 +132,7 @@ function millisToMinutesAndSeconds(millis: number) {
               }
             });
 
-            let prices = items.map(item => item.price)
+            let prices = items.map(item => parseInt(item.price))
             MMP = calculateMedian(prices)
             console.log(`MMP: ${MMP}`)
 
