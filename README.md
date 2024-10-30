@@ -36,10 +36,6 @@ Scrapping data on Merukari and export a CSV file<br>
 
 - Fixing an issue that MSC becomes 0 after running more than about 100 rows
 - Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
-- Implementing MMP
-- Implementing pmin
-- Implementing kws & kwsTitle
-- Implementing kwes & kwesTitle
 
 * Output file has contain the same number of rows in the same order as the input file
 
@@ -51,13 +47,6 @@ Scrapping data on Merukari and export a CSV file<br>
 [Utility]
 
 - Proxy Integration
-
-[Code]
-
-- Organizing the data layer
-  - Convert if sentences into shorthand
-  - Organize functions into separated files
-  - Implement in a way that it's easier to see the correspondence between headers and values
 
 # Branch
 
