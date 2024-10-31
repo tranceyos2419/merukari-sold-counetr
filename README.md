@@ -100,3 +100,4 @@ pnpm run start
 # Future Work
 
 - Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
+- Merukari: Use jut only one browser and pre for scrapping -> page.close()
