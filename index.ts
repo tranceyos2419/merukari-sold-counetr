@@ -6,7 +6,6 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { CSVInput, CSVOutput, ScrapedCondition, ScrapedItem } from "./interfaces";
 import launchUniqueBrowser from "./browser";
-import { HTTPResponse } from "puppeteer";
 
 puppeteer.use(StealthPlugin());
 dotenv.config();
@@ -99,8 +98,6 @@ function millisToMinutesAndSeconds(millis: number) {
     const outputDataSet: CSVOutput[] = [];
 
     for (const item of csvData) {
-      const productsOMURL: ScrapedItem[] = [];
-      const productsNMURL: ScrapedItem[] = [];
       let MSC = 0;
       let MMP = 0;
       let keyword = "";
@@ -174,13 +171,20 @@ function millisToMinutesAndSeconds(millis: number) {
             // Filter duplicates
             const uniqueItems = items.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
 
-
+            // Calculate MSC
+            if (uniqueItems.length > 0) {
+              for (const item of uniqueItems) {
+                const itemUpdatedDate = new Date(convertTimestampToDate(item.updated));
+                // Checking if "updated" time is before 30 days
+                if (itemUpdatedDate >= comparisonDate) {
+                  prices.push(parseInt(item.price))
+                }
+              }
+            }
 
           } catch (error) {
             console.warn("Issue parsing JSON response " + error);
           }
-
-
         }
       });
 
