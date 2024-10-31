@@ -6,6 +6,7 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { CSVInput, CSVOutput, ScrapedCondition, ScrapedItem } from "./interfaces";
 import launchUniqueBrowser from "./browser";
+import { HTTPResponse } from "puppeteer";
 
 puppeteer.use(StealthPlugin());
 dotenv.config();
@@ -52,9 +53,12 @@ function convertTimestampToDate(timestamp: string): string {
 }
 
 // Modify NMURL based on parameters
-function modifyNMURL(omurl: string, sp: number): string {
+function createNMURL(omurl: string, sp: number): string {
+  const price_max = sp.toString();
+  const parsedPrice_max = price_max.slice(1).replace(/\,/g, "");
   const url = new URL(omurl);
-  url.searchParams.set("price_max", sp.toString());
+
+  url.searchParams.set("price_max", parsedPrice_max);
   url.searchParams.set("status", "sold_out");
   url.searchParams.set("order", "desc");
   url.searchParams.set("sort", "created_time");
@@ -96,9 +100,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
     for (const item of csvData) {
       const productsOMURL: ScrapedItem[] = [];
-      const productsIdPMURL = new Set<string>();
       const productsNMURL: ScrapedItem[] = [];
-      const productsIdNMURL = new Set<string>();
       let MSC = 0;
       let MMP = 0;
       let keyword = "";
@@ -107,7 +109,7 @@ function millisToMinutesAndSeconds(millis: number) {
       let priceMax = NaN;
       let prices: number[] = []
 
-      const NMURL = modifyNMURL(item.OMURL, item.SP);
+      const NMURL = createNMURL(item.OMURL, item.SP);
 
       //# NMURL FLow
       const { browser, page } = await launchUniqueBrowser();
@@ -123,17 +125,19 @@ function millisToMinutesAndSeconds(millis: number) {
               (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
             );
 
-            // Filter out duplicates
-            items.forEach((item: ScrapedItem) => {
-              if (!productsIdNMURL.has(item.id)) {
-                productsIdNMURL.add(item.id);
-                productsNMURL.push({
-                  ...item,
-                  updated: convertTimestampToDate(item.updated),
-                });
-              }
-            });
+            // Filter duplicates
+            const uniqueItems = items.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
 
+            // Calculate MSC
+            if (uniqueItems.length > 0) {
+              for (const item of uniqueItems) {
+                const itemUpdatedDate = new Date(convertTimestampToDate(item.updated));
+                // Checking if "updated" time is before 30 days
+                if (itemUpdatedDate >= comparisonDate) {
+                  MSC = MSC + 1;
+                }
+              }
+            }
 
             // Get search condition
             const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
@@ -152,17 +156,7 @@ function millisToMinutesAndSeconds(millis: number) {
       await page.goto(NMURL, { waitUntil: "networkidle2", timeout: 300000 });
       await browser.close();
 
-      // Calculate MSC
-      if (productsNMURL.length > 0) {
-        // Checking if "updated" time is before 30 days
-        for (const product of productsNMURL) {
-          const itemUpdatedDate = new Date(product.updated);
-          if (itemUpdatedDate >= comparisonDate) {
-            // prices.push(parseInt(product.price))
-            MSC = MSC + 1;
-          }
-        }
-      }
+
       //# OMURL Flow
       const { browser: browserOMURL, page: pageOMURL } = await launchUniqueBrowser();
 
@@ -177,19 +171,16 @@ function millisToMinutesAndSeconds(millis: number) {
               (item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
             );
 
-            // Filter out duplicates
-            items.forEach((item: ScrapedItem) => {
-              if (!productsIdPMURL.has(item.id)) {
-                productsIdPMURL.add(item.id);
-                productsOMURL.push({
-                  ...item,
-                  updated: convertTimestampToDate(item.updated),
-                });
-              }
-            });
+            // Filter duplicates
+            const uniqueItems = items.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
+
+
+
           } catch (error) {
             console.warn("Issue parsing JSON response " + error);
           }
+
+
         }
       });
 
@@ -197,16 +188,6 @@ function millisToMinutesAndSeconds(millis: number) {
       await browserOMURL.close();
 
       // Calculate MMP
-      if (productsOMURL.length > 0) {
-        // Checking if "updated" time is before 30 days
-        for (const product of productsOMURL) {
-          const itemUpdatedDate = new Date(product.updated);
-          if (itemUpdatedDate >= comparisonDate) {
-            prices.push(parseInt(product.price))
-          }
-        }
-      }
-
       MMP = calculateMedian(prices)
 
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
