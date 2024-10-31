@@ -109,10 +109,10 @@ function millisToMinutesAndSeconds(millis: number) {
       const NMURL = createNMURL(item.OMURL, item.SP);
 
       //# NMURL FLow
-      const { browser, page } = await launchUniqueBrowser();
+      const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser();
 
       // Get parameters from entities:search json
-      page.on("response", async (response) => {
+      pageNMURL.on("response", async (response) => {
         const requestUrl = response.url();
         if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
           try {
@@ -143,15 +143,14 @@ function millisToMinutesAndSeconds(millis: number) {
             priceMin = parseInt(scrapedCondition.priceMin)
             priceMax = parseInt(scrapedCondition.priceMax)
 
-
           } catch (error) {
             console.warn("Issue parsing JSON response " + error);
           }
         }
       });
 
-      await page.goto(NMURL, { waitUntil: "networkidle2", timeout: 300000 });
-      await browser.close();
+      await pageNMURL.goto(NMURL, { waitUntil: "networkidle2", timeout: 300000 });
+      await browserNMURL.close();
 
 
       //# OMURL Flow
