@@ -14,7 +14,7 @@ const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
 const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 
 
-const readData = (filePath: string): CSVInput[] | CSVOutput[] => {
+const readDataSet = (filePath: string): CSVInput[] | CSVOutput[] => {
   let parsedData: CSVInput[] | CSVOutput[] = [];
   try {
     const csvData = fs.readFileSync(filePath, "utf-8");
@@ -94,10 +94,11 @@ function millisToMinutesAndSeconds(millis: number) {
   const comparisonDate = new Date(date30daysBefore);
 
   try {
-    const csvData = await readData(INPUT_FILE_PATH) as CSVInput[];
-    const outputDataSet: CSVOutput[] = [];
+    const inputDataSet: CSVInput[] = await readDataSet(INPUT_FILE_PATH) as CSVInput[];
+    const outputDataSet: CSVOutput[] = await readDataSet(OUTPUT_FILE_PATH) as CSVOutput[];
 
-    for (const item of csvData) {
+    for (let i = 0; i < inputDataSet.length; i++) {
+      const item = inputDataSet[i];
       let MSC = 0;
       let MMP = 0;
       let keyword = "";
@@ -110,6 +111,12 @@ function millisToMinutesAndSeconds(millis: number) {
 
       //# NMURL FLow
       const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser();
+
+      // If Identities the same in the input file and the output file , skip the row
+      if ((outputDataSet?.[i]?.Identity ?? "") === item?.Identity) {
+        console.log(`Skipping ${item?.Identity ?? ""} (Row ${i + 1})`);
+        continue;
+      }
 
       // Get parameters from entities:search json
       pageNMURL.on("response", async (response) => {
@@ -234,9 +241,9 @@ function millisToMinutesAndSeconds(millis: number) {
         tags: item.Identity,
         memo: item.OMURL
       }
-      outputDataSet.push(outputData);
+      outputDataSet[i] = outputData;
+      saveData(OUTPUT_FILE_PATH, outputDataSet);
     }
-    saveData(OUTPUT_FILE_PATH, outputDataSet);
   } catch (error) {
     console.error("Error during the scraping process:", error);
   } finally {
