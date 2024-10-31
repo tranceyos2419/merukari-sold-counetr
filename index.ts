@@ -121,13 +121,10 @@ function millisToMinutesAndSeconds(millis: number) {
       let priceMax = NaN;
       let prices: number[] = []
 
-
-
       const NMURL = createNMURL(item.OMURL, item.SP);
 
       //# NMURL FLow
       const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser();
-
 
       // Get parameters from entities:search json
       pageNMURL.on("response", async (response) => {
