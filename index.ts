@@ -99,6 +99,20 @@ function millisToMinutesAndSeconds(millis: number) {
 
     for (let i = 0; i < inputDataSet.length; i++) {
       const item = inputDataSet[i];
+      console.log(`${item?.Identity} (Row ${i + 1}) | The process begins`)
+
+      // If Identities the same in the input file and the output file , skip the row
+      if ((outputDataSet?.[i]?.Identity ?? "") === item?.Identity) {
+        console.log(`${item?.Identity} (Row ${i + 1} | Skipping this item`)
+        continue;
+      }
+
+      // If a URL is wrong, skip the row
+      if (!(inputDataSet?.[i]?.OMURL.includes("jp.mercari.com/search"))) {
+        console.log(`${item?.Identity} (Row ${i + 1} | Skipping this item`)
+        continue;
+      }
+
       let MSC = 0;
       let MMP = 0;
       let keyword = "";
@@ -107,22 +121,13 @@ function millisToMinutesAndSeconds(millis: number) {
       let priceMax = NaN;
       let prices: number[] = []
 
+
+
       const NMURL = createNMURL(item.OMURL, item.SP);
 
       //# NMURL FLow
       const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser();
 
-      // If Identities the same in the input file and the output file , skip the row
-      if ((outputDataSet?.[i]?.Identity ?? "") === item?.Identity) {
-        console.log(`Skipping ${item?.Identity ?? ""} (Row ${i + 1})`);
-        continue;
-      }
-
-      // If a URL is wrong, skip the row
-      if (!(inputDataSet?.[i]?.OMURL.includes("jp.mercari.com/search"))) {
-        console.log(`Skipping ${item?.Identity ?? ""} (Row ${i + 1})`);
-        continue;
-      }
 
       // Get parameters from entities:search json
       pageNMURL.on("response", async (response) => {
@@ -249,6 +254,7 @@ function millisToMinutesAndSeconds(millis: number) {
       }
       outputDataSet[i] = outputData;
       saveData(OUTPUT_FILE_PATH, outputDataSet);
+      console.log(`${item?.Identity} (Row ${i + 1}) | The process ends`)
     }
   } catch (error) {
     console.error("Error during the scraping process:", error);

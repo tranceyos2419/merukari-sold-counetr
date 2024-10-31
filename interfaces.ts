@@ -1,3 +1,8 @@
+export interface ProxyInput {
+  proxyURL: string,
+  username: string,
+  password: string,
+}
 export interface CSVInput {
   Keyword: string;
   Identity: string;
