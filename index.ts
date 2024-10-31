@@ -118,6 +118,12 @@ function millisToMinutesAndSeconds(millis: number) {
         continue;
       }
 
+      // If a URL is wrong, skip the row
+      if (!(inputDataSet?.[i]?.OMURL.includes("jp.mercari.com/search"))) {
+        console.log(`Skipping ${item?.Identity ?? ""} (Row ${i + 1})`);
+        continue;
+      }
+
       // Get parameters from entities:search json
       pageNMURL.on("response", async (response) => {
         const requestUrl = response.url();
