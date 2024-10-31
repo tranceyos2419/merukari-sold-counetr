@@ -1,6 +1,6 @@
 # Merukari Sold Counter
 
-## This is an on-going project. Some features have been implemented. Please look at \*.ts files to know the current state
+## This is an on-going project. Some features might already have been implemented. Please look at \*.ts files to know the current state
 
 Scrapping data on Merukari and export a CSV file<br>
 ➡️ Website to scrapse: [Merukari](https://jp.mercari.com)
@@ -20,7 +20,7 @@ Scrapping data on Merukari and export a CSV file<br>
 
 ## Flowcharts
 
-![Merukari Sold Counter - v1 3 0 drawio (2)](https://github.com/user-attachments/assets/8e2df185-f95f-4f91-90d3-9dec015271c3)
+![Merukari Sold Counter - v1 3 0 drawio](https://github.com/user-attachments/assets/976e665e-2f4c-4750-b45d-ef91ffc070a5)
 
 ## Explanation videos
 
