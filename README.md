@@ -39,15 +39,6 @@ Scrapping data on Merukari and export a CSV file<br>
 
 * Output file has contain the same number of rows in the same order as the input file
 
-  [Data-Handling]
-
-- Realtime saving (Saving data each time we scrape)
-- When we restart the tool, re-start from the last saving data
-
-[Utility]
-
-- Proxy Integration
-
 # Branch
 
 Please develop features on feature/[name] branches and merge them into the dev branch. <br>
