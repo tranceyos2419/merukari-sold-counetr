@@ -13,7 +13,7 @@ async function getCurrentIP(page) {
   return ip;
 }
 
-const launchUniqueBrowser = async (proxy?: ProxyInput
+const launchUniqueBrowser = async (proxy: ProxyInput
 ) => {
   const isProxyActive = process.env.IS_PROXY_ACTIVE === 'true';
   const args = [
@@ -37,6 +37,14 @@ const launchUniqueBrowser = async (proxy?: ProxyInput
   })
 
   const page = await browser.newPage();
+
+  if (isProxyActive) {
+    // if your proxy requires authentication
+    await page.authenticate({
+      username: proxy.username,
+      password: proxy.password,
+    });
+  }
 
   const agent = new UserAgent();
   await page.setUserAgent(agent.toString());

@@ -4,7 +4,7 @@ import path from "path";
 import Papa from 'papaparse';
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { CSVInput, CSVOutput, ScrapedCondition, ScrapedItem } from "./interfaces";
+import { CSVInput, CSVOutput, ProxyInput, ScrapedCondition, ScrapedItem } from "./interfaces";
 import launchUniqueBrowser from "./browser";
 
 puppeteer.use(StealthPlugin());
@@ -12,6 +12,7 @@ dotenv.config();
 
 const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
 const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
+const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 
 
 const readDataSet = (filePath: string): CSVInput[] | CSVOutput[] => {
@@ -28,6 +29,27 @@ const readDataSet = (filePath: string): CSVInput[] | CSVOutput[] => {
   console.log(`Read data from: ${filePath}`);
   return parsedData;
 };
+
+// Reading a JSON file
+const readProxiesJson = (filePath: string): ProxyInput[] => {
+  const result = new Promise((resolve, reject) => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        reject('Error reading the file: ' + err);
+        return;
+      }
+
+      try {
+        const proxies = JSON.parse(data);
+        resolve(proxies);
+      } catch (parseError) {
+        reject('Error parsing JSON: ' + parseError);
+      }
+    });
+  }) as unknown as ProxyInput[];
+  return result
+};
+
 
 const saveData = (filePath: string, data: CSVOutput[]) => {
   const finalData = Papa.unparse(data);
@@ -64,6 +86,11 @@ function createNMURL(omurl: string, sp: number): string {
   return url.toString();
 }
 
+function selectRandomProxy(arr: ProxyInput[]): ProxyInput {
+  const selected = arr[Math.floor(Math.random() * arr.length)];
+  return selected
+}
+
 export const calculateMedian = (numbers: number[]): number => {
   const sorted = Array.from(numbers).sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
@@ -96,6 +123,11 @@ function millisToMinutesAndSeconds(millis: number) {
   try {
     const inputDataSet: CSVInput[] = await readDataSet(INPUT_FILE_PATH) as CSVInput[];
     const outputDataSet: CSVOutput[] = await readDataSet(OUTPUT_FILE_PATH) as CSVOutput[];
+    const proxiesDataSet: ProxyInput[] = await readProxiesJson(PROXIES_FILE_PATH);
+
+    console.log(`the number of input read data: ${inputDataSet.length}`)
+    console.log(`the number of output read data: ${outputDataSet.length}`)
+    console.log(`the number of proxies: ${proxiesDataSet.length}`)
 
     for (let i = 0; i < inputDataSet.length; i++) {
       const item = inputDataSet[i];
@@ -124,7 +156,9 @@ function millisToMinutesAndSeconds(millis: number) {
       const NMURL = createNMURL(item.OMURL, item.SP);
 
       //# NMURL FLow
-      const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser();
+      const selectedProxy = selectRandomProxy(proxiesDataSet)
+
+      const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser(selectedProxy);
 
       // Get parameters from entities:search json
       pageNMURL.on("response", async (response) => {
@@ -169,7 +203,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
 
       //# OMURL Flow
-      const { browser: browserOMURL, page: pageOMURL } = await launchUniqueBrowser();
+      const { browser: browserOMURL, page: pageOMURL } = await launchUniqueBrowser(selectedProxy);
 
       // Get parameters from entities:search json
       pageOMURL.on("response", async (response) => {
