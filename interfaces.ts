@@ -7,10 +7,11 @@ export interface CSVInput {
   Keyword: string;
   Identity: string;
   OMURL: string;
+  OYURL: string;
+  ECURL: string;
   SP: number;
   FMP: string;
   TSC: number;
-
 }
 export interface CSVOutput extends CSVInput {
   NMURL: string;

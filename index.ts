@@ -244,6 +244,8 @@ function millisToMinutesAndSeconds(millis: number) {
 
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
+      const memo = `${item.OMURL} ${item.OYURL} ${item.ECURL}`
+
       const outputData: CSVOutput = {
         ...item,
         NMURL,
@@ -281,7 +283,7 @@ function millisToMinutesAndSeconds(millis: number) {
         autoMoveTryCnt: 0,
         autoMoveSuccessCnt: 0,
         tags: item.Identity,
-        memo: item.OMURL
+        memo: memo
       }
       outputDataSet[i] = outputData;
       saveData(OUTPUT_FILE_PATH, outputDataSet);
