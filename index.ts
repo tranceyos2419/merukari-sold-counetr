@@ -247,7 +247,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
       const MWR = Number((MSPC / MSC).toFixed(2)) ?? 0;
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MWR:${MWR} | MSC:${MSC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const memo = `${item.OMURL} ${item.OYURL} ${item.ECURL}`
 
