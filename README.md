@@ -8,7 +8,6 @@ Scrapping data on Merukari and export a CSV file<br>
 # Contents
 
 - [Specification](#Specification)
-- [Implementation](#Implementation)
 - [Branch](#branch)
 - [Installation](#installation)
 - [Development setup](#development-setup)
@@ -18,9 +17,30 @@ Scrapping data on Merukari and export a CSV file<br>
 
 # Specification
 
+## Attributes
+
+[Input]
+
+- Keyword: Description of items
+- Identity: Unique Key
+- OMURL: URL contains sold data of a specific item on Merukari
+- OYURL: URL contains sold data of a specific item on Yahoo Auction
+- ECURL: URL contains listed items in the cheapest order on eBay
+- SP: Price to source (Sourcing price)
+- FMP: Median of sold items on eBay in the last 30 days
+- TSC: The number of items sold on eBay in the last 30 days
+
+[output]
+
+- MSC: The number of sold items on OMURL in the last 30 days
+- MMP: The median of sold items on OMURL in the last 30 days
+- NMURL: URL contains sold data of a specific item under SP
+- MSPC: The number of sold items on NMURL in the last 30 days
+- MWR: The ratio of sold items under SP (MSPC / MSC)
+
 ## Flowcharts
 
-![Merukari Sold Counter - v1 3 0 drawio](https://github.com/user-attachments/assets/7f5fd3f8-17ad-48dc-aefe-1630f07e41a5)
+![Merukari Sold Counter - v1 3 0 drawio](https://github.com/user-attachments/assets/2deba228-7a4e-4e02-8f4c-92803dff9eb9)
 
 ## Explanation videos
 
@@ -29,15 +49,6 @@ Scrapping data on Merukari and export a CSV file<br>
 ## Examples I/O files
 
 ### [Example file 01](https://docs.google.com/spreadsheets/d/1SaieguLxp8nrFzjSr-qKWCcD1woiba4h2VKBL_SipwY/edit?usp=sharing)<br>
-
-# Implementation
-
-[Output]
-
-- Fixing an issue that MSC becomes 0 after running more than about 100 rows
-- Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
-
-* Output file has contain the same number of rows in the same order as the input file
 
 # Branch
 
@@ -90,5 +101,6 @@ pnpm run start
 
 # Future Work
 
+- Fixing an issue that MSC becomes 0 after running more than about 100 rows
 - Increasing the accuracy of MSC (Currently the inaccuracy is +-0 ~ 3)
 - Merukari: Use jut only one browser and pre for scrapping -> page.close()

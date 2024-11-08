@@ -18,6 +18,7 @@ export interface CSVOutput extends CSVInput {
   MMP: number;
   NMURL: string;
   MSPC: number;
+  MWR: number;
   name: string;
   switchAll: string;
   kws: string;
