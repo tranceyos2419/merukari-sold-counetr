@@ -145,6 +145,7 @@ function millisToMinutesAndSeconds(millis: number) {
         continue;
       }
 
+      let MC = 0;
       let MSC = 0;
       let MMP = 0;
       let keyword = "";
@@ -219,12 +220,13 @@ function millisToMinutesAndSeconds(millis: number) {
             // Filter duplicates
             const uniqueItems = items.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
 
-            // Calculate MSC
+            // Calculate MMP
             if (uniqueItems.length > 0) {
               for (const item of uniqueItems) {
                 const itemUpdatedDate = new Date(convertTimestampToDate(item.updated));
                 // Checking if "updated" time is before 30 days
                 if (itemUpdatedDate >= comparisonDate) {
+                  MC = MC + 1;
                   prices.push(parseInt(item.price))
                 }
               }
@@ -242,15 +244,16 @@ function millisToMinutesAndSeconds(millis: number) {
       // Calculate MMP
       MMP = calculateMedian(prices)
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSC:${MSC} | MC:${MC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
       const memo = `${item.OMURL} ${item.OYURL} ${item.ECURL}`
 
       const outputData: CSVOutput = {
         ...item,
+        MC,
+        MMP,
         NMURL,
         MSC,
-        MMP,
         name,
         switchAll: 'TRUE',
         kws: keyword,

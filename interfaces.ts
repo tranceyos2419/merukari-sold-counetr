@@ -14,9 +14,10 @@ export interface CSVInput {
   TSC: number;
 }
 export interface CSVOutput extends CSVInput {
+  MC: number;
+  MMP: number;
   NMURL: string;
   MSC: number;
-  MMP: number;
   name: string;
   switchAll: string;
   kws: string;
