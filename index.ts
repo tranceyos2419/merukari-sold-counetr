@@ -249,7 +249,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
-      const memo = `${item.OMURL} ${item.OYURL} ${item.ECURL}`
+      const memo = `${item.OMURL} ${item.OYURL} ${item.TURL} ${item.CCURL} ${item.PURL}`
 
       const outputData: CSVOutput = {
         ...item,

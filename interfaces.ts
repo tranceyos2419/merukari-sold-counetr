@@ -8,7 +8,9 @@ export interface CSVInput {
   Identity: string;
   OMURL: string;
   OYURL: string;
-  ECURL: string;
+  TURL: string;
+  CCURL: string;
+  PURL: string;
   SP: number;
   FMP: string;
   TSC: number;
