@@ -246,6 +246,7 @@ function millisToMinutesAndSeconds(millis: number) {
 
 
       const MWR = Number((MSPC / MSC).toFixed(2)) ?? 0;
+      const MDSR = Number((MSPC / item.TSC).toFixed(2)) ?? 0;
 
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC:${item.TSC}`;
 
@@ -258,6 +259,7 @@ function millisToMinutesAndSeconds(millis: number) {
         NMURL,
         MSPC,
         MWR,
+        MDSR,
         name,
         switchAll: 'TRUE',
         kws: keyword,

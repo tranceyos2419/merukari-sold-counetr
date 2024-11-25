@@ -37,6 +37,7 @@ Scrapping data on Merukari and export a CSV file<br>
 - NMURL: URL contains sold data of a specific item under SP
 - MSPC: The number of sold items on NMURL in the last 30 days
 - MWR: The ratio of sold items under SP (MSPC / MSC)
+- MDSR: The ratio of demand (TSC) and supply (MSPC) (MSPC / TSC)
 
 ## Flowcharts
 
