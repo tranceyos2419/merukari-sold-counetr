@@ -244,11 +244,10 @@ function millisToMinutesAndSeconds(millis: number) {
       // Calculate MMP
       MMP = calculateMedian(prices)
 
-
       const MWR = Number((MSPC / MSC).toFixed(2)) ?? 0;
       const MDSR = Number((MSPC / item.TSC).toFixed(2)) ?? 0;
 
-      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC:${item.TSC}`;
+      const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC${item.Period}:${item.TSC}`;
 
       const memo = `${item.OMURL} ${item.OYURL} ${item.TURL} ${item.CCURL} ${item.PURL}`
 

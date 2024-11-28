@@ -28,6 +28,7 @@ Scrapping data on Merukari and export a CSV file<br>
 - ECURL: URL contains listed items in the cheapest order on eBay
 - SP: Price to source (Sourcing price)
 - FMP: Median of sold items on eBay in the last 30 days
+- Period: The period of calculating FMP and TSC
 - TSC: The number of items sold on eBay in the last 30 days
 
 [output]

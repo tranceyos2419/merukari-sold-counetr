@@ -13,6 +13,7 @@ export interface CSVInput {
   PURL: string;
   SP: number;
   FMP: string;
+  Period: number;
   TSC: number;
 }
 export interface CSVOutput extends CSVInput {
