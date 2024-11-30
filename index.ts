@@ -14,7 +14,6 @@ const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
 const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 
-
 const readDataSet = (filePath: string): CSVInput[] | CSVOutput[] => {
   let parsedData: CSVInput[] | CSVOutput[] = [];
   try {
@@ -148,11 +147,14 @@ function millisToMinutesAndSeconds(millis: number) {
       let MSC = 0;
       let MSPC = 0;
       let MMP = 0;
+      let TSC = 0;
       let keyword = "";
       let exclusiveKeyword = "";
       let priceMin = NaN;
       let priceMax = NaN;
       let prices: number[] = []
+
+      TSC = item.Period == 90 ? item.TSC / 3 : item.TSC; // converting TSC90 into TSC30 (30 days)
 
       const NMURL = createNMURL(item.OMURL, item.SP);
 
@@ -245,7 +247,7 @@ function millisToMinutesAndSeconds(millis: number) {
       MMP = calculateMedian(prices)
 
       const MWR = Number((MSPC / MSC).toFixed(2)) ?? 0;
-      const MDSR = Number((MSPC / item.TSC).toFixed(2)) ?? 0;
+      const MDSR = Number((MSPC / TSC).toFixed(2)) ?? 0;
 
       const name = `${item.Identity} | ${item.Keyword} | SP:${item.SP} | MSPC:${MSPC} | MMP:${MMP.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })} | MSC:${MSC} | MWR:${MWR} | FMP:${item.FMP} | TSC${item.Period}:${item.TSC}`;
 
