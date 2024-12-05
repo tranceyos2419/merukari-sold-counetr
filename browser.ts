@@ -46,6 +46,8 @@ const launchUniqueBrowser = async (proxy: ProxyInput
     });
   }
 
+  
+
   const agent = new UserAgent();
   await page.setUserAgent(agent.toString());
 
