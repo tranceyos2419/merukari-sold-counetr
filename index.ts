@@ -13,7 +13,7 @@ import {
 	selectRandomProxy,
 	calculateMedian,
 	millisToMinutesAndSeconds,
-} from "./helper";
+} from "./helper";git
 import {
 	CSVInput,
 	CSVOutput,
@@ -29,6 +29,28 @@ dotenv.config();
 const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
 const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
+const MAX_RETRIES = 3;
+
+// handling internet issue kinda thing retry mechanism
+async function executeWithRetry<T>(
+	operation: () => Promise<T>,
+	errorHandler: (error: any) => void,
+	retryCount: number = MAX_RETRIES
+): Promise<T | null> {
+	for (let attempt = 1; attempt <= retryCount; attempt++) {
+		try {
+			return await operation();
+		} catch (error) {
+			errorHandler(error);
+			if (attempt < retryCount) {
+				console.log(`Retrying ${attempt} of ${retryCount}...`);
+			} else {
+				console.error("Max retries reached. Operation failed.");
+			}
+		}
+	}
+	return null;
+}
 
 (async () => {
 	console.log("This app is in Action");
@@ -77,153 +99,167 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 
 			const selectedProxy = selectRandomProxy(proxiesDataSet);
 
-			const { browser: browserNMURL, page: pageNMURL } =
-				await launchUniqueBrowser(selectedProxy);
+			// Retry mechanism for browser navigation and scraping
+			const scrapeNMURL = async () => {
+				const { browser: browserNMURL, page: pageNMURL } =
+					await launchUniqueBrowser(selectedProxy);
 
-			pageNMURL.on("response", async (response) => {
-				const requestUrl = response.url();
-				if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
-					try {
-						// console.log("Response Headers:", response.headers());
-						// if response header content lenth is not > 0 then return
-						if (response.headers()["content-length"] === "0") {
-							// skip the current iteration
-							return;
-						}
+				pageNMURL.on("response", async (response) => {
+					const requestUrl = response.url();
+					if (
+						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
+					) {
+						try {
+							if (response.headers()["content-length"] === "0") {
+								return;
+							}
 
-						const text = await response.text();
-						const jsonResponse = JSON.parse(text);
-						// console.log("Parsed JSON:", jsonResponse);
+							const text = await response.text();
+							const jsonResponse = JSON.parse(text);
 
-						if (!jsonResponse || !jsonResponse.items) {
-							throw new Error(
-								`Unexpected JSON format: ${JSON.stringify(jsonResponse)}`
-							);
-						}
-
-						const items: ScrapedItem[] = jsonResponse.items.filter(
-							(item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
-						);
-
-						const uniqueItems = items.filter(
-							(item, index, self) =>
-								index === self.findIndex((t) => t.id === item.id)
-						);
-
-						MSC = items.length;
-						if (uniqueItems.length > 0) {
-							for (const item of uniqueItems) {
-								const itemUpdatedDate = new Date(
-									convertTimestampToDate(item.updated)
+							if (!jsonResponse || !jsonResponse.items) {
+								throw new Error(
+									`Unexpected JSON format: ${JSON.stringify(jsonResponse)}`
 								);
-								if (itemUpdatedDate >= comparisonDate) {
-									MSPC += 1;
+							}
+
+							const items: ScrapedItem[] = jsonResponse.items.filter(
+								(item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
+							);
+
+							const uniqueItems = items.filter(
+								(item, index, self) =>
+									index === self.findIndex((t) => t.id === item.id)
+							);
+
+							MSC = items.length;
+							if (uniqueItems.length > 0) {
+								for (const item of uniqueItems) {
+									const itemUpdatedDate = new Date(
+										convertTimestampToDate(item.updated)
+									);
+									if (itemUpdatedDate >= comparisonDate) {
+										MSPC += 1;
+									}
 								}
 							}
-						}
 
-						const scrapedCondition =
-							jsonResponse.searchCondition as ScrapedCondition;
-						if (scrapedCondition) {
-							keyword = scrapedCondition.keyword
-								? scrapedCondition.keyword
-										.split(" ")
-										.filter((part) => part !== "")
-										.join(",")
-								: "";
-							exclusiveKeyword = scrapedCondition.excludeKeyword
-								? scrapedCondition.excludeKeyword
-										.split(" ")
-										.filter((part) => part !== "")
-										.join("|")
-								: "";
-							priceMin = parseInt(scrapedCondition.priceMin ?? "0");
-							priceMax = parseInt(scrapedCondition.priceMax ?? "0");
-						} else {
+							const scrapedCondition =
+								jsonResponse.searchCondition as ScrapedCondition;
+							if (scrapedCondition) {
+								keyword = scrapedCondition.keyword
+									? scrapedCondition.keyword
+											.split(" ")
+											.filter((part) => part !== "")
+											.join(",")
+									: "";
+								exclusiveKeyword = scrapedCondition.excludeKeyword
+									? scrapedCondition.excludeKeyword
+											.split(" ")
+											.filter((part) => part !== "")
+											.join("|")
+									: "";
+								priceMin = parseInt(scrapedCondition.priceMin ?? "0");
+								priceMax = parseInt(scrapedCondition.priceMax ?? "0");
+							} else {
+								console.warn(
+									"searchCondition is missing or invalid, using default values."
+								);
+								keyword = "";
+								exclusiveKeyword = "";
+								priceMin = 0;
+								priceMax = 0;
+							}
+						} catch (error) {
+							console.error(
+								" Issue parsing JSON response: NMURL ",
+								error,
+								"this is response status",
+								response.status()
+							);
+						}
+					}
+				});
+
+				await pageNMURL.goto(NMURL, {
+					waitUntil: "networkidle2",
+					timeout: 500000,
+				});
+				await browserNMURL.close();
+			};
+
+			await executeWithRetry(scrapeNMURL, (error) =>
+				console.error("Error during NMURL scraping:", error)
+			);
+
+			const scrapeOMURL = async () => {
+				const { browser: browserOMURL, page: pageOMURL } =
+					await launchUniqueBrowser(selectedProxy);
+
+				pageOMURL.on("response", async (response) => {
+					const requestUrl = response.url();
+					if (
+						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
+					) {
+						try {
+							if (!response) {
+								throw new Error(`Response body is missing`);
+							}
+
+							if (response.headers()["content-length"] === "0") {
+								return;
+							}
+
+							const jsonResponse = await response.json();
+
+							if (!jsonResponse || !jsonResponse.items) {
+								throw new Error(
+									`Unexpected JSON format: ${JSON.stringify(jsonResponse)}`
+								);
+							}
+
+							const items: ScrapedItem[] = jsonResponse.items.filter(
+								(item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
+							);
+
+							const uniqueItems = items.filter(
+								(item, index, self) =>
+									index === self.findIndex((t) => t.id === item.id)
+							);
+
+							if (uniqueItems.length > 0) {
+								for (const item of uniqueItems) {
+									const itemUpdatedDate = new Date(
+										convertTimestampToDate(item.updated)
+									);
+									if (itemUpdatedDate >= comparisonDate) {
+										MSC += 1;
+										prices.push(parseInt(item.price ?? "0"));
+									}
+								}
+							}
+						} catch (error) {
 							console.warn(
-								"searchCondition is missing or invalid, using default values."
+								"Issue parsing JSON response: OMURL",
+								error,
+								"This is the RESPONSE status ###################",
+								response.status()
 							);
-							keyword = "";
-							exclusiveKeyword = "";
-							priceMin = 0;
-							priceMax = 0;
 						}
-					} catch (error) {
-						console.error(
-							" Issue parsing JSON response: NMURL ",
-							error,
-							"this is response status",
-							response.status()
-						);
-						// console.log("Response Status:", response.status());
-						// console.log("Response Headers:", response.headers());
 					}
-				}
-			});
+				});
 
-			await pageNMURL.goto(NMURL, {
-				waitUntil: "networkidle2",
-				timeout: 500000,
-			});
-			await browserNMURL.close();
+				await pageOMURL.goto(item.OMURL, {
+					waitUntil: "networkidle2",
+					timeout: 500000,
+				});
+				await browserOMURL.close();
+			};
 
-			const { browser: browserOMURL, page: pageOMURL } =
-				await launchUniqueBrowser(selectedProxy);
-
-			pageOMURL.on("response", async (response) => {
-				const requestUrl = response.url();
-				if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
-					try {
-						if (!response) {
-							throw new Error(`Response body is missing`);
-						}
-
-						if (response.headers()["content-length"] === "0") {
-							return;
-						}
-
-						const jsonResponse = await response.json();
-
-						if (!jsonResponse || !jsonResponse.items) {
-							throw new Error(`Unexpected JSON format: ${jsonResponse}`);
-						}
-
-						const items: ScrapedItem[] = jsonResponse.items.filter(
-							(item: ScrapedItem) => item.status === "ITEM_STATUS_SOLD_OUT"
-						);
-
-						const uniqueItems = items.filter(
-							(item, index, self) =>
-								index === self.findIndex((t) => t.id === item.id)
-						);
-
-						if (uniqueItems.length > 0) {
-							for (const item of uniqueItems) {
-								const itemUpdatedDate = new Date(
-									convertTimestampToDate(item.updated)
-								);
-								if (itemUpdatedDate >= comparisonDate) {
-									MSC += 1;
-									prices.push(parseInt(item.price ?? "0"));
-								}
-							}
-						}
-					} catch (error) {
-						console.warn(
-							" Issue parsing JSON response: OMURL ",
-							error,
-							"This is the RESPONSE status ###################",
-							response.status()
-						);
-					}
-				}
-			});
-
-			await pageOMURL.goto(item.OMURL, {
-				waitUntil: "networkidle2",
-				timeout: 300000,
-			});
-			await browserOMURL.close();
+			
+			await executeWithRetry(scrapeOMURL, (error) =>
+				console.error("Error during OMURL scraping:", error)
+			);
 
 			MMP = calculateMedian(prices);
 
