@@ -81,7 +81,6 @@ export interface ScrapedOMURLResult {
 }
 
 export interface ScrapeNMResult {
-	MSC: number; // Total items sold out
 	MSPC: number; // Matching items based on updated date
 	keyword: string; // Processed keyword
 	exclusiveKeyword: string; // Processed excludeKeyword

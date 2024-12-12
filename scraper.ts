@@ -79,7 +79,6 @@ export const scrapeNMURL = async (
 	comparisonDate: Date,
 	selectedProxy: ProxyInput
 ): Promise<ScrapeNMResult> => {
-	let MSC = 0;
 	let MSPC = 0;
 	let keyword = "";
 	let exclusiveKeyword = "";
@@ -112,8 +111,6 @@ export const scrapeNMURL = async (
 			const uniqueItems = items.filter(
 				(item, index, self) => index === self.findIndex((t) => t.id === item.id)
 			);
-
-			MSC = items.length;
 
 			if (uniqueItems.length > 0) {
 				for (const item of uniqueItems) {
@@ -170,5 +167,5 @@ export const scrapeNMURL = async (
 	await browserNMURL.close();
 
 	// Return the manipulated values
-	return { MSC, MSPC, keyword, exclusiveKeyword, priceMin, priceMax };
+	return { MSPC, keyword, exclusiveKeyword, priceMin, priceMax };
 };

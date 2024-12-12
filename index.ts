@@ -78,7 +78,6 @@ let outputDataSet: CSVOutput[] = [];
 			);
 
 			if (NMResult) {
-				MSC = NMResult.MSC;
 				MSPC = NMResult.MSPC;
 				keyword = NMResult.keyword;
 				exclusiveKeyword = NMResult.exclusiveKeyword;
@@ -94,8 +93,7 @@ let outputDataSet: CSVOutput[] = [];
 			);
 
 			if (OMResult) {
-				// MSC = items.length; initially in scrapeNMURL function then we increment
-				MSC += OMResult.MSC;
+				MSC = OMResult.MSC;
 				prices = OMResult.prices;
 			} else {
 				console.log("Operation failed after retries.");
