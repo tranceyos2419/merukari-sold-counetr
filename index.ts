@@ -168,7 +168,7 @@ let outputDataSet: CSVOutput[] = [];
 	} finally {
 		const endTime = performance.now();
 
-		// check if the row count is the same
+		// check if the row count in the input and the outfile are the same
 		if (inputDataSet.length !== outputDataSet.length) {
 			console.error("Row count mismatch between input and output!");
 			throw new Error(
