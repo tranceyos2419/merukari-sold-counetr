@@ -94,7 +94,7 @@ let outputDataSet: CSVOutput[] = [];
 			);
 
 			if (OMResult) {
-				// MSC = items.length; initially in scrapeNMURL function thenn we increment
+				// MSC = items.length; initially in scrapeNMURL function then we increment
 				MSC += OMResult.MSC;
 				prices = OMResult.prices;
 			} else {

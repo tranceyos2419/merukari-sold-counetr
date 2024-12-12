@@ -6,12 +6,12 @@ import { ProxyInput } from "./interfaces";
 puppeteer.use(StealthPlugin());
 
 //# To debug ip rotating from proxy
-async function getCurrentIP(page) {
-  await page.goto('https://api.ipify.org');
-  const ip = await page.evaluate(() => document.body.innerText);
-  console.log(`Current IP: ${ip}`);
-  return ip;
-}
+// async function getCurrentIP(page) {
+//   await page.goto('https://api.ipify.org');
+//   const ip = await page.evaluate(() => document.body.innerText);
+//   console.log(`Current IP: ${ip}`);
+//   return ip;
+// }
 
 const launchUniqueBrowser = async (proxy: ProxyInput
 ) => {
@@ -45,8 +45,6 @@ const launchUniqueBrowser = async (proxy: ProxyInput
       password: proxy.password,
     });
   }
-
-  
 
   const agent = new UserAgent();
   await page.setUserAgent(agent.toString());

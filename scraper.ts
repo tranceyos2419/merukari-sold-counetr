@@ -1,4 +1,3 @@
-// import { scrapeNMURL } from "./scraper";
 import launchUniqueBrowser from "./browser";
 import {
 	ScrapedItem,
@@ -8,19 +7,7 @@ import {
 	ScrapedCondition,
 } from "./interfaces";
 
-import { convertTimestampToDate, selectRandomProxy } from "./helper";
-
-// export type scrapeNMURLReturnType = {
-// 	MSC: number;
-// 	MSPC: number;
-// 	MMP: number;
-// 	TSC: number;
-// 	keyword: string;
-// 	exclusiveKeyword: string;
-// 	priceMin: any;
-// 	priceMax: any;
-// 	prices: number[];
-// };
+import { convertTimestampToDate } from "./helper";
 
 export const scrapeOMURL = async (
 	url: string,
@@ -41,7 +28,7 @@ export const scrapeOMURL = async (
 			}
 
 			if (response.headers()["content-length"] === "0") {
-				return;
+				return; // No data in the response
 			}
 
 			const jsonResponse = await response.json();
@@ -106,7 +93,7 @@ export const scrapeNMURL = async (
 	const processResponse = async (response: any) => {
 		try {
 			if (response.headers()["content-length"] === "0") {
-				return;
+				return; // No data in the response
 			}
 
 			const text = await response.text();
@@ -139,20 +126,21 @@ export const scrapeNMURL = async (
 				}
 			}
 
+			// If searchCondition is null, put default values
 			const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
 
 			if (scrapedCondition) {
 				keyword = scrapedCondition.keyword
 					? scrapedCondition.keyword
-							.split(" ")
-							.filter((part) => part !== "")
-							.join(",")
+						.split(" ")
+						.filter((part) => part !== "")
+						.join(",")
 					: "";
 				exclusiveKeyword = scrapedCondition.excludeKeyword
 					? scrapedCondition.excludeKeyword
-							.split(" ")
-							.filter((part) => part !== "")
-							.join("|")
+						.split(" ")
+						.filter((part) => part !== "")
+						.join("|")
 					: "";
 				priceMin = parseInt(scrapedCondition.priceMin ?? "0", 10);
 				priceMax = parseInt(scrapedCondition.priceMax ?? "0", 10);

@@ -1,9 +1,8 @@
 import fs from "fs";
-import path from "path";
 import Papa from "papaparse";
 import { ProxyInput, CSVInput, CSVOutput, NameParameter } from "./interfaces";
-const MAX_RETRIES = 3;
 
+//$ Read & Write utils
 // Read a CSV file
 export const readDataSet = (filePath: string): CSVInput[] | CSVOutput[] => {
 	let parsedData: CSVInput[] | CSVOutput[] = [];
@@ -53,7 +52,43 @@ export const saveData = (filePath: string, data: CSVOutput[]) => {
 	}
 };
 
-// Utility functions
+
+
+//$ Scrapping utils
+export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
+	return arr[Math.floor(Math.random() * arr.length)];
+};
+
+// handling internet issue kinda thing retry mechanism
+export async function executeWithRetry<T>(
+	operation: () => Promise<T>,
+	errorHandler: (error: any) => void,
+): Promise<T | null> {
+	const MAX_RETRIES = 3;
+	const retryCount = MAX_RETRIES;
+
+	const delay = (ms: number) =>
+		new Promise((resolve) => setTimeout(resolve, ms));
+
+	for (let attempt = 1; attempt <= retryCount; attempt++) {
+		try {
+			return await operation();
+		} catch (error) {
+			errorHandler(error);
+			if (attempt < retryCount) {
+				console.log(
+					`Retrying ${attempt} of ${retryCount}... Waiting 1 minute.`
+				);
+				await delay(60000); // wait for 60 seconds to retrying
+			} else {
+				console.error("Max retries reached. Operation failed.");
+			}
+		}
+	}
+	return null;
+}
+
+//$ Data manipulation utils
 export const getDate30DaysAgo = (): string => {
 	const today = new Date();
 	today.setDate(today.getDate() - 30);
@@ -75,10 +110,6 @@ export const createNMURL = (omurl: string, sp: number): string => {
 	return url.toString();
 };
 
-export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
-	return arr[Math.floor(Math.random() * arr.length)];
-};
-
 export const calculateMedian = (numbers: number[]): number => {
 	const sorted = numbers.slice().sort((a, b) => a - b);
 	const middle = Math.floor(sorted.length / 2);
@@ -93,90 +124,64 @@ export const millisToMinutes = (millis: number): string => {
 	return `${minutes}:${seconds.padStart(2, "0")}`;
 };
 
-// get name
 export const getName = (data: NameParameter): string => {
-	return `${data.item.Identity} | ${data.item.Keyword} | SP:${
-		data.item.SP
-	} | MSPC:${data.MSPC} | MMP:${data.MMP.toLocaleString("ja-JP", {
+	return `
+		${data.item.Identity} |
+		${data.item.Keyword} |
+		SP:${data.item.SP} |
+		MSPC:${data.MSPC} |
+		MMP:${data.MMP.toLocaleString("ja-JP", {
 		style: "currency",
 		currency: "JPY",
-	})} | MSC:${data.MSC} | MWR:${data.MWR} | FMP:${data.item.FMP} | TSC${
-		data.item.Period
-	}:${data.item.TSC}`;
+	})} |
+		MSC:${data.MSC} |
+		MWR:${data.MWR} |
+		FMP:${data.item.FMP} |
+		TSC${data.item.Period}:${data.item.TSC}`;
 };
 
-
-
-// handling internet issue kinda thing retry mechanism
-export async function executeWithRetry<T>(
-	operation: () => Promise<T>,
-	errorHandler: (error: any) => void,
-	retryCount: number = MAX_RETRIES
-): Promise<T | null> {
-	const delay = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
-
-	for (let attempt = 1; attempt <= retryCount; attempt++) {
-		try {
-			return await operation();
-		} catch (error) {
-			errorHandler(error);
-			if (attempt < retryCount) {
-				console.log(
-					`Retrying ${attempt} of ${retryCount}... Waiting 1 minute.`
-				);
-				await delay(60000); // wait befre retrying
-			} else {
-				console.error("Max retries reached. Operation failed.");
-			}
-		}
-	}
-	return null;
-}
-
-
-export const  createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOutput => {
-    return {
-        ...item,
-        MSC: 0,
-        MMP: 0,
-        NMURL: "",
-        MSPC: 0,
-        MWR: 0,
-        MDSR: 0,
-        name: "",
-        switchAll: "",
-        kws: "",
-        kwes: "",
-        pmin: 0,
-        pmax: 0,
-        sve: undefined,
-        nickname: undefined,
-        nicknameExs: undefined,
-        itemStatuses: "",
-        freeShipping: undefined,
-        kwsTitle: "",
-        kwesTitle: "",
-        autoBuy: "",
-        gotoBuy: "",
-        type: "",
-        target: undefined,
-        category: undefined,
-        size: undefined,
-        brand: undefined,
-        sellerId: undefined,
-        sellerIdExs: undefined,
-        notificationCnt: 0,
-        receiveCnt: 0,
-        openCnt: 0,
-        buyCnt: undefined,
-        buyPrice: undefined,
-        autoBuyTryCnt: 0,
-        autoBuySuccessCnt: 0,
-        autoMoveTryCnt: 0,
-        autoMoveSuccessCnt: 0,
-        tags: item.Identity,
-        memo: "",
-        Error: errorMessage
-    };
+export const createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOutput => {
+	return {
+		...item,
+		MSC: 0,
+		MMP: 0,
+		NMURL: "",
+		MSPC: 0,
+		MWR: 0,
+		MDSR: 0,
+		name: "",
+		switchAll: "",
+		kws: "",
+		kwes: "",
+		pmin: 0,
+		pmax: 0,
+		sve: undefined,
+		nickname: undefined,
+		nicknameExs: undefined,
+		itemStatuses: "",
+		freeShipping: undefined,
+		kwsTitle: "",
+		kwesTitle: "",
+		autoBuy: "",
+		gotoBuy: "",
+		type: "",
+		target: undefined,
+		category: undefined,
+		size: undefined,
+		brand: undefined,
+		sellerId: undefined,
+		sellerIdExs: undefined,
+		notificationCnt: 0,
+		receiveCnt: 0,
+		openCnt: 0,
+		buyCnt: undefined,
+		buyPrice: undefined,
+		autoBuyTryCnt: 0,
+		autoBuySuccessCnt: 0,
+		autoMoveTryCnt: 0,
+		autoMoveSuccessCnt: 0,
+		tags: item.Identity,
+		memo: "",
+		Error: errorMessage
+	};
 }

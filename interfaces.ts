@@ -56,7 +56,7 @@ export interface CSVOutput extends CSVInput {
 	autoMoveSuccessCnt: number;
 	tags: string;
 	memo: string;
-	Error? : string;
+	Error?: string;
 }
 // Interface for scraped item data
 export interface ScrapedItem {
@@ -65,25 +65,6 @@ export interface ScrapedItem {
 	price: string;
 	status: string;
 	updated: string;
-}
-
-// export interface ScrapedCondition {
-// 	keyword: string;
-// 	excludeKeyword: string;
-// 	priceMin: string;
-// 	priceMax: string;
-// }
-
-export interface ScrapedResponse {
-	MSC: number;
-	MSPC: number;
-	MMP: number;
-	TSC: number;
-	keyword: string;
-	exclusiveKeyword: string;
-	priceMin: any;
-	priceMax: any;
-	prices: number[];
 }
 
 export type NameParameter = {
