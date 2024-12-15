@@ -101,8 +101,14 @@ let outputDataSet: CSVOutput[] = [];
 
 			MMP = calculateMedian(prices);
 
-			const MWR = Number((MSPC / MSC).toFixed(2)) ?? 0;
-			const MDSR = Number((MSPC / TSC).toFixed(2)) ?? 0;
+			const MWR =
+				isNaN(MSPC / MSC) || !isFinite(MSPC / MSC)
+					? 0
+					: Number((MSPC / MSC).toFixed(2));
+			const MDSR =
+				isNaN(MSPC / TSC) || !isFinite(MSPC / TSC)
+					? 0
+					: Number((MSPC / TSC).toFixed(2));
 
 			const nameParameters = {
 				item: item,
@@ -124,7 +130,7 @@ let outputDataSet: CSVOutput[] = [];
 				MSPC,
 				MWR,
 				MDSR,
-				name,
+				name: name,
 				switchAll: "TRUE",
 				kws: keyword,
 				kwes: exclusiveKeyword,
@@ -162,6 +168,7 @@ let outputDataSet: CSVOutput[] = [];
 			outputDataSet[i] = outputData;
 			saveData(OUTPUT_FILE_PATH, outputDataSet);
 			console.log(`${item?.Identity} (Row ${i + 1}) | The process ends`);
+			
 		}
 	} catch (error) {
 		console.error("Error during the scraping process:", error);

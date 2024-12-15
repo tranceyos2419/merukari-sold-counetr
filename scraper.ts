@@ -70,7 +70,6 @@ export const scrapeOMURL = async (
 	});
 
 	await browserOMURL.close();
-
 	return { MSC, prices };
 };
 
@@ -84,15 +83,13 @@ export const scrapeNMURL = async (
 	let exclusiveKeyword = "";
 	let priceMin = 0;
 	let priceMax = 0;
-
-	const { browser: browserNMURL, page: pageNMURL } = await launchUniqueBrowser(
-		selectedProxy
-	);
+	let retryCount = 0;
+	const maxRetries = 3;
 
 	const processResponse = async (response: any) => {
 		try {
 			if (response.headers()["content-length"] === "0") {
-				return; // No data in the response
+				return;
 			}
 
 			const text = await response.text();
@@ -123,48 +120,91 @@ export const scrapeNMURL = async (
 				}
 			}
 
-			// If searchCondition is null, put default values
 			const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
 
 			if (scrapedCondition) {
 				keyword = scrapedCondition.keyword
 					? scrapedCondition.keyword
-						.split(" ")
-						.filter((part) => part !== "")
-						.join(",")
+							.split(" ")
+							.filter((part) => part !== "")
+							.join(",")
 					: "";
 				exclusiveKeyword = scrapedCondition.excludeKeyword
 					? scrapedCondition.excludeKeyword
-						.split(" ")
-						.filter((part) => part !== "")
-						.join("|")
+							.split(" ")
+							.filter((part) => part !== "")
+							.join("|")
 					: "";
 				priceMin = parseInt(scrapedCondition.priceMin ?? "0", 10);
 				priceMax = parseInt(scrapedCondition.priceMax ?? "0", 10);
-			} else {
-				console.log("searchCondition is null, using default values.");
 			}
 		} catch (error) {
 			console.error("Issue parsing JSON response: NMURL", error);
 		}
 	};
 
-	// Attach response handler
-	pageNMURL.on("response", async (response: any) => {
-		const requestUrl = response.url();
-		if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
-			await processResponse(response);
+	// helpe function to wait for a minute
+	const wait = (ms: number) =>
+		new Promise((resolve) => setTimeout(resolve, ms));
+
+	const scrapeWithRetry = async (): Promise<void> => {
+		while (retryCount < maxRetries) {
+			const { browser: browserNMURL, page: pageNMURL } =
+				await launchUniqueBrowser(selectedProxy);
+
+			try {
+				// attach response handler
+				pageNMURL.on("response", async (response: any) => {
+					const requestUrl = response.url();
+					if (
+						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
+					) {
+						await processResponse(response);
+					}
+				});
+
+				// Navigate to the page
+				await pageNMURL.goto(NMURL, {
+					waitUntil: "networkidle2",
+					timeout: 500000,
+				});
+
+				// Check if critical fields are populated
+				if (keyword && exclusiveKeyword && priceMax) {
+					break; // Exit retry loop if values are valid
+				} else {
+					console.log(
+						`Retry #${retryCount + 1}: searchCondition is null Retrying...`
+					);
+					retryCount++;
+					await wait(60000); // Wait for 1 minute before retrying
+				}
+			} catch (error) {
+				console.error(
+					`Error during scraping attempt #${retryCount + 1}:`,
+					error
+				);
+				retryCount++;
+				await wait(60000); // Wait for 1 minute before retrying
+			} finally {
+				// Close the browser for this iteration
+				await browserNMURL.close();
+			}
 		}
-	});
+	};
 
-	// Navigate to the page
-	await pageNMURL.goto(NMURL, {
-		waitUntil: "networkidle2",
-		timeout: 500000,
-	});
+	// Perform scraping with retries
+	await scrapeWithRetry();
 
-	// Close the browser
-	await browserNMURL.close();
+	// If retries are exhausted and fields are still empty, use default values
+	// no need of checking priceMin right sometimes it becomes as 0 thats why checking priceMax is enough
+	if (!keyword || !exclusiveKeyword || !priceMax) {
+		console.log("Retries exhausted. Using default values for searchCondition.");
+		keyword = "";
+		exclusiveKeyword = "";
+		priceMin = 0;
+		priceMax = 0;
+	}
 
 	// Return the manipulated values
 	return { MSPC, keyword, exclusiveKeyword, priceMin, priceMax };

@@ -52,8 +52,6 @@ export const saveData = (filePath: string, data: CSVOutput[]) => {
 	}
 };
 
-
-
 //$ Scrapping utils
 export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
 	return arr[Math.floor(Math.random() * arr.length)];
@@ -62,7 +60,7 @@ export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
 // handling internet issue kinda thing retry mechanism
 export async function executeWithRetry<T>(
 	operation: () => Promise<T>,
-	errorHandler: (error: any) => void,
+	errorHandler: (error: any) => void
 ): Promise<T | null> {
 	const MAX_RETRIES = 3;
 	const retryCount = MAX_RETRIES;
@@ -113,6 +111,10 @@ export const createNMURL = (omurl: string, sp: number): string => {
 export const calculateMedian = (numbers: number[]): number => {
 	const sorted = numbers.slice().sort((a, b) => a - b);
 	const middle = Math.floor(sorted.length / 2);
+	// check if the length of the array is zero
+	if (!sorted.length) {
+		return 0;
+	}
 	return sorted.length % 2 === 0
 		? (sorted[middle - 1] + sorted[middle]) / 2
 		: sorted[middle];
@@ -131,16 +133,19 @@ export const getName = (data: NameParameter): string => {
 		SP:${data.item.SP} |
 		MSPC:${data.MSPC} |
 		MMP:${data.MMP.toLocaleString("ja-JP", {
-		style: "currency",
-		currency: "JPY",
-	})} |
+			style: "currency",
+			currency: "JPY",
+		})} |
 		MSC:${data.MSC} |
 		MWR:${data.MWR} |
 		FMP:${data.item.FMP} |
 		TSC${data.item.Period}:${data.item.TSC}`;
 };
 
-export const createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOutput => {
+export const createDefaultOutput = (
+	item: CSVInput,
+	errorMessage: string
+): CSVOutput => {
 	return {
 		...item,
 		MSC: 0,
@@ -182,6 +187,6 @@ export const createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOu
 		autoMoveSuccessCnt: 0,
 		tags: item.Identity,
 		memo: "",
-		Error: errorMessage
+		Error: errorMessage,
 	};
-}
+};
