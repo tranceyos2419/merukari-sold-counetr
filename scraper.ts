@@ -16,10 +16,8 @@ export const scrapeOMURL = async (
 ): Promise<ScrapedOMURLResult> => {
 	let MSC = 0;
 	let prices: number[] = [];
-
-	const { browser: browserOMURL, page: pageOMURL } = await launchUniqueBrowser(
-		selectedProxy
-	);
+	let retryCount = 0;
+	const maxRetries = 3;
 
 	const processResponse = async (response: any) => {
 		try {
@@ -57,21 +55,68 @@ export const scrapeOMURL = async (
 		}
 	};
 
-	pageOMURL.on("response", async (response: any) => {
-		const requestUrl = response.url();
-		if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
-			await processResponse(response);
+	// Helper function to wait for a specified time
+	const wait = (ms: number) =>
+		new Promise((resolve) => setTimeout(resolve, ms));
+
+	const scrapeWithRetry = async (): Promise<void> => {
+		while (retryCount < maxRetries) {
+			const { browser: browserOMURL, page: pageOMURL } =
+				await launchUniqueBrowser(selectedProxy);
+
+			try {
+				// Attach response handler
+				pageOMURL.on("response", async (response: any) => {
+					const requestUrl = response.url();
+					if (
+						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
+					) {
+						await processResponse(response);
+					}
+				});
+
+				// Navigate to the page
+				await pageOMURL.goto(url, {
+					waitUntil: "networkidle2",
+					timeout: 500000,
+				});
+
+				// Check if critical fields are populated
+				if (MSC > 0 && prices.length > 0) {
+					break; // Exit retry loop if values are valid
+				} else {
+					console.log(
+						`Retry #${retryCount + 1}: Prices or MSC not populated. Retrying...`
+					);
+					retryCount++;
+					await wait(60000); // Wait for a minute before retrying
+				}
+			} catch (error) {
+				console.error(
+					`Error during scraping attempt #${retryCount + 1}:`,
+					error
+				);
+				retryCount++;
+				await wait(60000); // Wait for 1 minute before retryin
+			} finally {
+				await browserOMURL.close();
+			}
 		}
-	});
+	};
 
-	await pageOMURL.goto(url, {
-		waitUntil: "networkidle2",
-		timeout: 500000,
-	});
+	// Perform scraping with retries
+	await scrapeWithRetry();
 
-	await browserOMURL.close();
+	// If retries are exhausted and fields are still empty, log and return empty values
+	if (MSC === 0 || prices.length === 0) {
+		console.log("Retries exhausted. No data retrieved for MSC or prices.");
+		MSC = 0;
+		prices = [];
+	}
+
 	return { MSC, prices };
 };
+
 
 export const scrapeNMURL = async (
 	NMURL: string,
