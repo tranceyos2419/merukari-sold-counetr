@@ -23,8 +23,8 @@ import { scrapeOMURL, scrapeNMURL } from "./scraper";
 puppeteer.use(StealthPlugin());
 dotenv.config();
 
-const INPUT_FILE_PATH = path.join(process.cwd(), "testInput.csv");
-const OUTPUT_FILE_PATH = path.join(process.cwd(), "testOutput.csv");
+const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
+const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 
 let inputDataSet: CSVInput[] = [];
