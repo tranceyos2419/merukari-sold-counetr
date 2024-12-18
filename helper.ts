@@ -86,6 +86,11 @@ export async function executeWithRetry<T>(
 	return null;
 }
 
+// helper function to wait
+export const wait = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));
+
+
 //$ Data manipulation utils
 export const getDate30DaysAgo = (): string => {
 	const today = new Date();
@@ -133,9 +138,9 @@ export const getName = (data: NameParameter): string => {
 		SP:${data.item.SP} |
 		MSPC:${data.MSPC} |
 		MMP:${data.MMP.toLocaleString("ja-JP", {
-			style: "currency",
-			currency: "JPY",
-		})} |
+		style: "currency",
+		currency: "JPY",
+	})} |
 		MSC:${data.MSC} |
 		MWR:${data.MWR} |
 		FMP:${data.item.FMP} |

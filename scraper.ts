@@ -7,7 +7,7 @@ import {
 	ScrapedCondition,
 } from "./interfaces";
 
-import { convertTimestampToDate } from "./helper";
+import { convertTimestampToDate, wait } from "./helper";
 
 export const scrapeOMURL = async (
 	url: string,
@@ -170,15 +170,15 @@ export const scrapeNMURL = async (
 			if (scrapedCondition) {
 				keyword = scrapedCondition.keyword
 					? scrapedCondition.keyword
-							.split(" ")
-							.filter((part) => part !== "")
-							.join(",")
+						.split(" ")
+						.filter((part) => part !== "")
+						.join(",")
 					: "";
 				exclusiveKeyword = scrapedCondition.excludeKeyword
 					? scrapedCondition.excludeKeyword
-							.split(" ")
-							.filter((part) => part !== "")
-							.join("|")
+						.split(" ")
+						.filter((part) => part !== "")
+						.join("|")
 					: "";
 				priceMin = parseInt(scrapedCondition.priceMin ?? "0", 10);
 				priceMax = parseInt(scrapedCondition.priceMax ?? "0", 10);
@@ -188,9 +188,7 @@ export const scrapeNMURL = async (
 		}
 	};
 
-	// helpe function to wait for a minute
-	const wait = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
+
 
 	const scrapeWithRetry = async (): Promise<void> => {
 		while (retryCount < maxRetries) {
