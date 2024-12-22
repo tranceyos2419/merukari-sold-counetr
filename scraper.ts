@@ -1,38 +1,39 @@
-import launchUniqueBrowser from "./browser";
+import { Page } from "puppeteer";
 import {
 	ScrapedItem,
 	ScrapedOMURLResult,
-	ProxyInput,
 	ScrapeNMResult,
 	ScrapedCondition,
 } from "./interfaces";
-
-import { convertTimestampToDate, wait } from "./helper";
+import { convertTimestampToDate } from "./helper";
 
 export const scrapeOMURL = async (
+	page: Page,
 	url: string,
-	comparisonDate: Date,
-	selectedProxy: ProxyInput
+	comparisonDate: Date
 ): Promise<ScrapedOMURLResult> => {
+	const retryLimit = 3;
 	let MSC = 0;
 	let prices: number[] = [];
-	let retryCount = 0;
-	const maxRetries = 3;
+	let retries = 0;
 
 	const processResponse = async (response: any) => {
 		try {
+			console.log("Processing OMURL response...");
 			if (!response) {
-				throw new Error(`Response body is missing`);
+				throw new Error(`Response is null or undefined`);
 			}
 
 			if (response.headers()["content-length"] === "0") {
-				return; // No data in the response
+				console.warn("Empty response body detected.");
+				return;
 			}
 
 			const jsonResponse = await response.json();
-
 			if (!jsonResponse || !jsonResponse.items) {
-				throw new Error(`Invalid JSON format: ${JSON.stringify(jsonResponse)}`);
+				throw new Error(
+					`Invalid response format: ${JSON.stringify(jsonResponse)}`
+				);
 			}
 
 			const items: ScrapedItem[] = jsonResponse.items.filter(
@@ -46,104 +47,100 @@ export const scrapeOMURL = async (
 			for (const item of uniqueItems) {
 				const itemUpdatedDate = new Date(convertTimestampToDate(item.updated));
 				if (itemUpdatedDate >= comparisonDate) {
-					MSC += 1;
+					MSC++;
 					prices.push(parseInt(item.price ?? "0"));
 				}
 			}
 		} catch (error) {
-			console.warn("Issue parsing JSON response: OMURL", error);
+			console.error("Error processing OMURL response:", error);
 		}
 	};
 
-	// Helper function to wait for a specified time
-	const wait = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
-
-	const scrapeWithRetry = async (): Promise<void> => {
-		while (retryCount < maxRetries) {
-			const { browser: browserOMURL, page: pageOMURL } =
-				await launchUniqueBrowser(selectedProxy);
-
-			try {
-				// Attach response handler
-				pageOMURL.on("response", async (response: any) => {
-					const requestUrl = response.url();
-					if (
-						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
-					) {
-						await processResponse(response);
-					}
-				});
-
-				// Navigate to the page
-				await pageOMURL.goto(url, {
-					waitUntil: "networkidle2",
-					timeout: 500000,
-				});
-
-				// Check if critical fields are populated
-				if (MSC > 0 && prices.length > 0) {
-					break; // Exit retry loop if values are valid
-				} else {
-					console.log(
-						`Retry #${retryCount + 1}: Prices or MSC not populated. Retrying...`
-					);
-					retryCount++;
-					await wait(60000); // Wait for a minute before retrying
+	const navigateAndScrape = async (): Promise<boolean> => {
+		try {
+			page.on("response", async (response: any) => {
+				const requestUrl = response.url();
+				if (requestUrl.includes("https://api.mercari.jp/v2/entities:search")) {
+					await processResponse(response);
 				}
-			} catch (error) {
-				console.error(
-					`Error during scraping attempt #${retryCount + 1}:`,
-					error
-				);
-				retryCount++;
-				await wait(60000); // Wait for 1 minute before retryin
-			} finally {
-				await browserOMURL.close();
+			});
+
+			console.log(`Navigating (Attempt ${retries + 1})`);
+			await page.goto(url, { waitUntil: "networkidle2", timeout: 500000 });
+
+			if (MSC > 0 || prices.length > 0) {
+				return true;
+			}
+		} catch (error) {
+			const err = error.message;
+			if (
+				err.includes("detached Frame") ||
+				err.includes("frame was detached")
+			) {
+				console.warn(`Frame was detached during navigation, retrying...`);
+			} else {
+				console.error(`Error during navigation attempt ${retries + 1}:`, error);
 			}
 		}
+		return false;
 	};
 
-	// Perform scraping with retries
-	await scrapeWithRetry();
+	while (retries < retryLimit) {
+		const success = await navigateAndScrape();
+		if (success) break;
 
-	// If retries are exhausted and fields are still empty, log and return empty values
-	if (MSC === 0 || prices.length === 0) {
-		console.log("Retries exhausted. No data retrieved for MSC or prices.");
-		MSC = 0;
-		prices = [];
+		retries++;
+		console.warn(`Retrying OMURL scrape (${retries}/${retryLimit})...`);
+		if (retries < retryLimit) {
+			await new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
+		} else {
+			console.error("Exceeded maximum retry attempts for OMURL scrape.");
+		}
 	}
 
 	return { MSC, prices };
 };
 
-
 export const scrapeNMURL = async (
+	page: Page,
 	NMURL: string,
-	comparisonDate: Date,
-	selectedProxy: ProxyInput
+	comparisonDate: Date
 ): Promise<ScrapeNMResult> => {
 	let MSPC = 0;
 	let keyword = "";
 	let exclusiveKeyword = "";
 	let priceMin = 0;
 	let priceMax = 0;
-	let retryCount = 0;
-	const maxRetries = 3;
+
+	const retryLimit = 3; // Maximum retry attempts
+	let retries = 0;
 
 	const processResponse = async (response: any) => {
 		try {
+			console.log("Processing NMURL response...");
+			if (!response) {
+				throw new Error("Response object is null or undefined.");
+			}
+
 			if (response.headers()["content-length"] === "0") {
+				console.warn("Received empty response.");
 				return;
 			}
 
-			const text = await response.text();
-			const jsonResponse = JSON.parse(text);
+			let jsonResponse: any;
+			try {
+				const text = await response.text();
+				jsonResponse = JSON.parse(text);
+			} catch (error) {
+				throw new Error(`Failed to parse response JSON: ${error.message}`);
+			}
 
-			if (!jsonResponse || !jsonResponse.items) {
-				throw new Error(
-					`Unexpected JSON format: ${JSON.stringify(jsonResponse)}`
-				);
+			if (!jsonResponse || typeof jsonResponse !== "object") {
+				throw new Error("Unexpected JSON format or null JSON.");
+			}
+
+			if (!Array.isArray(jsonResponse.items)) {
+				throw new Error("Missing or invalid 'items' array in JSON.");
 			}
 
 			const items: ScrapedItem[] = jsonResponse.items.filter(
@@ -154,101 +151,96 @@ export const scrapeNMURL = async (
 				(item, index, self) => index === self.findIndex((t) => t.id === item.id)
 			);
 
-			if (uniqueItems.length > 0) {
-				for (const item of uniqueItems) {
-					const itemUpdatedDate = new Date(
-						convertTimestampToDate(item.updated)
-					);
-					if (itemUpdatedDate >= comparisonDate) {
-						MSPC += 1;
-					}
+			for (const item of uniqueItems) {
+				const itemUpdatedDate = new Date(convertTimestampToDate(item.updated));
+				if (itemUpdatedDate >= comparisonDate) {
+					MSPC += 1;
 				}
 			}
 
 			const scrapedCondition = jsonResponse.searchCondition as ScrapedCondition;
-
 			if (scrapedCondition) {
 				keyword = scrapedCondition.keyword
 					? scrapedCondition.keyword
-						.split(" ")
-						.filter((part) => part !== "")
-						.join(",")
+							.split(" ")
+							.filter((part) => part.trim() !== "")
+							.join(",")
 					: "";
 				exclusiveKeyword = scrapedCondition.excludeKeyword
 					? scrapedCondition.excludeKeyword
-						.split(" ")
-						.filter((part) => part !== "")
-						.join("|")
+							.split(" ")
+							.filter((part) => part.trim() !== "")
+							.join("|")
 					: "";
 				priceMin = parseInt(scrapedCondition.priceMin ?? "0", 10);
 				priceMax = parseInt(scrapedCondition.priceMax ?? "0", 10);
 			}
 		} catch (error) {
-			console.error("Issue parsing JSON response: NMURL", error);
+			console.error(`Error during NMURL response processing: ${error.message}`);
 		}
 	};
 
-
-
-	const scrapeWithRetry = async (): Promise<void> => {
-		while (retryCount < maxRetries) {
-			const { browser: browserNMURL, page: pageNMURL } =
-				await launchUniqueBrowser(selectedProxy);
-
-			try {
-				// attach response handler
-				pageNMURL.on("response", async (response: any) => {
+	const navigateAndScrape = async (): Promise<boolean> => {
+		try {
+			page.on("response", async (response: any) => {
+				try {
 					const requestUrl = response.url();
 					if (
 						requestUrl.includes("https://api.mercari.jp/v2/entities:search")
 					) {
 						await processResponse(response);
 					}
-				});
-
-				// Navigate to the page
-				await pageNMURL.goto(NMURL, {
-					waitUntil: "networkidle2",
-					timeout: 500000,
-				});
-
-				// Check if critical fields are populated
-				if (keyword && exclusiveKeyword && priceMax) {
-					break; // Exit retry loop if values are valid
-				} else {
-					console.log(
-						`Retry #${retryCount + 1}: searchCondition is null Retrying...`
+				} catch (error) {
+					console.error(
+						`Error during response handling for NMURL: ${error.message}`
 					);
-					retryCount++;
-					await wait(60000); // Wait for 1 minute before retrying
 				}
-			} catch (error) {
-				console.error(
-					`Error during scraping attempt #${retryCount + 1}:`,
-					error
-				);
-				retryCount++;
-				await wait(60000); // Wait for 1 minute before retrying
-			} finally {
-				// Close the browser for this iteration
-				await browserNMURL.close();
+			});
+
+			console.log(`Navigating to NMURL`);
+			await page.goto(NMURL, {
+				waitUntil: "networkidle2",
+				timeout: 500000,
+			});
+
+			if (keyword || priceMax || exclusiveKeyword) {
+				console.log("Scraping NMURL successful.");
+				return true;
+			} else {
+				console.warn("No valid data found for NMURL.");
+				return false;
 			}
+		} catch (error) {
+			if (error.message.includes("detached Frame")) {
+				console.warn(`Frame was detached during NMURL navigation, retrying...`);
+			} else {
+				console.error(`Error during NMURL navigation: ${error.message}`);
+			}
+			return false;
 		}
 	};
 
-	// Perform scraping with retries
-	await scrapeWithRetry();
+	while (retries < retryLimit) {
+		try {
+			const success = await navigateAndScrape();
+			if (success) {
+				console.log("NMURL scraping completed successfully.");
+				break;
+			}
+		} catch (error) {
+			console.log(`Search Condition is null ${retries + 1}: ${error.message}`);
+		}
 
-	// If retries are exhausted and fields are still empty, use default values
-	// no need of checking priceMin right sometimes it becomes as 0 thats why checking priceMax is enough
-	if (!keyword || !exclusiveKeyword || !priceMax) {
-		console.log("Retries exhausted. Using default values for searchCondition.");
-		keyword = "";
-		exclusiveKeyword = "";
-		priceMin = 0;
-		priceMax = 0;
+		retries++;
+		if (retries >= retryLimit) {
+			console.error(`Failed to scrape NMURL ${retryLimit} attempts.`);
+		} else {
+			console.warn(`Retrying NMURL scrape (${retries}/${retryLimit})...`);
+			await new Promise((resolve) => setTimeout(resolve, 60000));
+		}
 	}
 
-	// Return the manipulated values
 	return { MSPC, keyword, exclusiveKeyword, priceMin, priceMax };
 };
+
+

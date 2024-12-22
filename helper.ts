@@ -42,12 +42,28 @@ export const readProxiesJson = (filePath: string): ProxyInput[] => {
 };
 
 // Save CSV file
+
 export const saveData = (filePath: string, data: CSVOutput[]) => {
 	try {
-		const finalData = Papa.unparse(data);
+		// Filter out empty or invalid entries
+		const filteredData = data.filter(
+			(item) => item && Object.keys(item).length > 0
+		);
+
+		// Check if there is valid data to save
+		if (filteredData.length === 0) {
+			console.error(
+				`Error: No valid data to save to ${filePath}. The data is empty or invalid.`
+			);
+			return;
+		}
+
+		// Convert to CSV format using PapaParse
+		const finalData = Papa.unparse(filteredData);
 		fs.writeFileSync(filePath, finalData);
 		console.log(`Saved data to: ${filePath}`);
 	} catch (err) {
+		console.log("Data is", data); // Log data for debugging purposes
 		console.error(`Error saving data to: ${filePath}`, err);
 	}
 };
@@ -85,11 +101,6 @@ export async function executeWithRetry<T>(
 	}
 	return null;
 }
-
-// helper function to wait
-export const wait = (ms: number) =>
-	new Promise((resolve) => setTimeout(resolve, ms));
-
 
 //$ Data manipulation utils
 export const getDate30DaysAgo = (): string => {
@@ -138,9 +149,9 @@ export const getName = (data: NameParameter): string => {
 		SP:${data.item.SP} |
 		MSPC:${data.MSPC} |
 		MMP:${data.MMP.toLocaleString("ja-JP", {
-		style: "currency",
-		currency: "JPY",
-	})} |
+			style: "currency",
+			currency: "JPY",
+		})} |
 		MSC:${data.MSC} |
 		MWR:${data.MWR} |
 		FMP:${data.item.FMP} |
