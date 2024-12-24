@@ -33,7 +33,7 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 		outputDataSet = readDataSet(OUTPUT_FILE_PATH) as CSVOutput[];
 		const proxiesDataSet: ProxyInput[] = readProxiesJson(PROXIES_FILE_PATH);
 		// opening 8 tab concurrently depend on your pc performance make it higher or lower
-		const cluster = await initializeCluster(8);
+		const cluster = await initializeCluster(10);
 
 		await cluster.task(async ({ page, data }) => {
 			const { item, comparisonDate, proxiesDataSet, rowIndex } = data;
@@ -193,4 +193,3 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 		);
 	}
 })();
-
