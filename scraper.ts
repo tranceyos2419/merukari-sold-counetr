@@ -6,11 +6,13 @@ import {
 	ScrapedCondition,
 } from "./interfaces";
 import { convertTimestampToDate, getWaitTime, wait } from "./helper";
+import { identity } from "puppeteer-core/lib/esm/third_party/rxjs/rxjs.js";
 
 export const scrapeOMURL = async (
 	page: Page,
 	url: string,
-	comparisonDate: Date
+	comparisonDate: Date,
+	identity: string
 ): Promise<ScrapedOMURLResult> => {
 	const retryLimit = 3;
 	let MSC = 0;
@@ -19,7 +21,7 @@ export const scrapeOMURL = async (
 
 	const processResponse = async (response: any) => {
 		try {
-			console.log("Processing OMURL response...");
+			console.log(`${identity} | Processing OMURL response...`);
 			if (!response) {
 				throw new Error(`Response is null or undefined`);
 			}
@@ -65,7 +67,7 @@ export const scrapeOMURL = async (
 				}
 			});
 
-			console.log(`Navigating (Attempt ${retries + 1})`);
+			console.log(`${identity} - Navigating to OMURL`);
 			await page.goto(url, { waitUntil: "networkidle2", timeout: 500000 });
 
 			if (MSC > 0 || prices.length > 0) {
@@ -87,25 +89,28 @@ export const scrapeOMURL = async (
 
 	while (retries < retryLimit) {
 		const success = await navigateAndScrape();
-		if (success) break;
+		if (success) {
+			console.log(`${identity} | OMURL scraping completed successfully.`);
+			break;
+		}
 
 		retries++;
 		const waitTime = getWaitTime(retries);
-		console.warn(`Retrying OMURL scrape (${retries}/${retryLimit})...`);
-		if (retries < retryLimit) {
-			await wait(waitTime)
+		if (retries >= retryLimit) {
+			console.error(`${identity} | Failed to scrape OMURL ${retryLimit} attempts.`);
 		} else {
-			console.error("Exceeded maximum retry attempts for OMURL scrape.");
+			console.warn(`${identity} | Retrying OMURL scrape (${retries}/${retryLimit})...`);
+			await wait(waitTime)
 		}
 	}
-
 	return { MSC, prices };
 };
 
 export const scrapeNMURL = async (
 	page: Page,
 	NMURL: string,
-	comparisonDate: Date
+	comparisonDate: Date,
+	identity: string
 ): Promise<ScrapeNMResult> => {
 	let MSPC = 0;
 	let keyword = "";
@@ -118,7 +123,7 @@ export const scrapeNMURL = async (
 
 	const processResponse = async (response: any) => {
 		try {
-			console.log("Processing NMURL response...");
+			console.log(`${identity} | Processing NMURL response...`);
 			if (!response) {
 				throw new Error("Response object is null or undefined.");
 			}
@@ -198,14 +203,14 @@ export const scrapeNMURL = async (
 				}
 			});
 
-			console.log(`Navigating to NMURL`);
+			console.log(`${identity} | Navigating to NMURL`);
 			await page.goto(NMURL, {
 				waitUntil: "networkidle2",
 				timeout: 500000,
 			});
 
 			if (keyword || priceMax || exclusiveKeyword) {
-				console.log("Scraping NMURL successful.");
+				console.log(`${identity} - Scraping NMURL successful`);
 				return true;
 			} else {
 				console.warn("No valid data found for NMURL.");
@@ -225,7 +230,7 @@ export const scrapeNMURL = async (
 		try {
 			const success = await navigateAndScrape();
 			if (success) {
-				console.log("NMURL scraping completed successfully.");
+				console.log(`${identity} | NMURL scraping completed successfully.`);
 				break;
 			}
 		} catch (error) {
@@ -235,9 +240,9 @@ export const scrapeNMURL = async (
 		retries++;
 		const waitTime = getWaitTime(retries);
 		if (retries >= retryLimit) {
-			console.error(`Failed to scrape NMURL ${retryLimit} attempts.`);
+			console.error(`${identity} | Failed to scrape NMURL ${retryLimit} attempts.`);
 		} else {
-			console.warn(`Retrying NMURL scrape (${retries}/${retryLimit})...`);
+			console.warn(`${identity} | Retrying NMURL scrape (${retries}/${retryLimit})...`);
 			await wait(waitTime)
 		}
 	}

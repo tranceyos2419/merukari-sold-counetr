@@ -11,7 +11,6 @@ export let cluster: Cluster | null = null;
 
 
 // Initializes the Puppeteer cluster with the 5 default concurrency but we can pass.
-
 export const initializeCluster = async (maxConcurrency = 5) => {
 	if (cluster) {
 		console.log("Cluster is already initialized.");
@@ -45,7 +44,6 @@ export const initializeCluster = async (maxConcurrency = 5) => {
 				"--deterministic-fetch",
 			],
 		},
-		retryLimit: 3,
 	});
 
 	console.log(`Cluster initialized with ${maxConcurrency} workers.`);

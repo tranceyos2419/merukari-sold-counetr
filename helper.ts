@@ -43,7 +43,7 @@ export const readProxiesJson = (filePath: string): ProxyInput[] => {
 
 // Save CSV file
 
-export const saveData = (filePath: string, data: CSVOutput[]) => {
+export const saveData = (filePath: string, data: CSVOutput[], identity: string) => {
 	try {
 		// Filter out empty or invalid entries
 		const filteredData = data.filter(
@@ -61,7 +61,7 @@ export const saveData = (filePath: string, data: CSVOutput[]) => {
 		// Convert to CSV format using PapaParse
 		const finalData = Papa.unparse(filteredData);
 		fs.writeFileSync(filePath, finalData);
-		console.log(`Saved data to: ${filePath}`);
+		console.log(`${identity} | Saved data to: ${filePath}`);
 	} catch (err) {
 		console.log("Data is", data); // Log data for debugging purposes
 		console.error(`Error saving data to: ${filePath}`, err);

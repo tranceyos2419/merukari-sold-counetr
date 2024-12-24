@@ -75,7 +75,7 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 			const NMURL = createNMURL(item.OMURL, item.SP);
 
 			try {
-				const NMResult = await scrapeNMURL(page, NMURL, comparisonDate);
+				const NMResult = await scrapeNMURL(page, NMURL, comparisonDate, item.Identity);
 				if (NMResult) {
 					MSPC = NMResult.MSPC;
 					keyword = NMResult.keyword;
@@ -84,7 +84,7 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 					priceMax = NMResult.priceMax;
 				}
 
-				const OMResult = await scrapeOMURL(page, item.OMURL, comparisonDate);
+				const OMResult = await scrapeOMURL(page, item.OMURL, comparisonDate, item.Identity);
 				if (OMResult) {
 					MSC = OMResult.MSC;
 					prices = OMResult.prices;
@@ -157,7 +157,7 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 				};
 
 				outputDataSet[rowIndex] = outputData;
-				saveData(OUTPUT_FILE_PATH, outputDataSet);
+				saveData(OUTPUT_FILE_PATH, outputDataSet, item.Identity);
 				console.log(`${item?.Identity}(Row ${rowIndex + 1}) | Processing ends`);
 			} catch (error) {
 				console.error(
