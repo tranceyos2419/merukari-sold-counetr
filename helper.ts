@@ -42,51 +42,48 @@ export const readProxiesJson = (filePath: string): ProxyInput[] => {
 };
 
 // Save CSV file
-export const saveData = (filePath: string, data: CSVOutput[]) => {
+
+export const saveData = (filePath: string, data: CSVOutput[], identity: string) => {
 	try {
-		const finalData = Papa.unparse(data);
+		// Filter out empty or invalid entries
+		const filteredData = data.filter(
+			(item) => item && Object.keys(item).length > 0
+		);
+
+		// Check if there is valid data to save
+		if (filteredData.length === 0) {
+			console.error(
+				`Error: No valid data to save to ${filePath}. The data is empty or invalid.`
+			);
+			return;
+		}
+
+		// Convert to CSV format using PapaParse
+		const finalData = Papa.unparse(filteredData);
 		fs.writeFileSync(filePath, finalData);
-		console.log(`Saved data to: ${filePath}`);
+		console.log(`${identity} | Saved data to: ${filePath}`);
 	} catch (err) {
+		console.log("Data is", data); // Log data for debugging purposes
 		console.error(`Error saving data to: ${filePath}`, err);
 	}
 };
-
-
 
 //$ Scrapping utils
 export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
 	return arr[Math.floor(Math.random() * arr.length)];
 };
 
-// handling internet issue kinda thing retry mechanism
-export async function executeWithRetry<T>(
-	operation: () => Promise<T>,
-	errorHandler: (error: any) => void,
-): Promise<T | null> {
-	const MAX_RETRIES = 3;
-	const retryCount = MAX_RETRIES;
+// helper function to wait
+export const wait = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));
 
-	const delay = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
-
-	for (let attempt = 1; attempt <= retryCount; attempt++) {
-		try {
-			return await operation();
-		} catch (error) {
-			errorHandler(error);
-			if (attempt < retryCount) {
-				console.log(
-					`Retrying ${attempt} of ${retryCount}... Waiting 1 minute.`
-				);
-				await delay(60000); // wait for 60 seconds to retrying
-			} else {
-				console.error("Max retries reached. Operation failed.");
-			}
-		}
-	}
-	return null;
+export const getWaitTime = (retryCount: number) => {
+	let waitTime = 5000; // wait for 5 seconds
+	if (retryCount === 1) waitTime = 10000; // wait for 10 seconds
+	if (retryCount === 2) waitTime = 20000; // wait for 20 seconds
+	return waitTime;
 }
+
 
 //$ Data manipulation utils
 export const getDate30DaysAgo = (): string => {
@@ -113,6 +110,10 @@ export const createNMURL = (omurl: string, sp: number): string => {
 export const calculateMedian = (numbers: number[]): number => {
 	const sorted = numbers.slice().sort((a, b) => a - b);
 	const middle = Math.floor(sorted.length / 2);
+	// check if the length of the array is zero
+	if (!sorted.length) {
+		return 0;
+	}
 	return sorted.length % 2 === 0
 		? (sorted[middle - 1] + sorted[middle]) / 2
 		: sorted[middle];
@@ -140,7 +141,10 @@ export const getName = (data: NameParameter): string => {
 		TSC${data.item.Period}:${data.item.TSC}`;
 };
 
-export const createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOutput => {
+export const createDefaultOutput = (
+	item: CSVInput,
+	errorMessage: string
+): CSVOutput => {
 	return {
 		...item,
 		MSC: 0,
@@ -182,6 +186,6 @@ export const createDefaultOutput = (item: CSVInput, errorMessage: string): CSVOu
 		autoMoveSuccessCnt: 0,
 		tags: item.Identity,
 		memo: "",
-		Error: errorMessage
+		Error: errorMessage,
 	};
-}
+};

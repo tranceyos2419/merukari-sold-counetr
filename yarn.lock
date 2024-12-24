@@ -25,11 +25,6 @@
     js-tokens "^4.0.0"
     picocolors "^1.0.0"
 
-"@esbuild/linux-x64@0.23.1":
-  version "0.23.1"
-  resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.23.1.tgz"
-  integrity sha512-EV6+ovTsEXCPAp58g2dD68LxoP/wK5pRvgy0J/HxPGB009omFPv3Yet0HiaqvrIrgPTBuC6wCH1LTOY91EO5hQ==
-
 "@esbuild/win32-x64@0.23.1":
   version "0.23.1"
   resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.23.1.tgz"
@@ -808,6 +803,13 @@ pump@^3.0.0:
     end-of-stream "^1.1.0"
     once "^1.3.1"
 
+puppeteer-cluster@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.npmjs.org/puppeteer-cluster/-/puppeteer-cluster-0.24.0.tgz"
+  integrity sha512-zHPoNsrwkFLKFtgJJv2aC13EbMASQsE048uZd7CyikEXcl+sc1Nf6PMFb9kMoZI7/zMYxvuP658o2mw079ZZyQ==
+  dependencies:
+    debug "^4.3.4"
+
 puppeteer-core@*, puppeteer-core@^23.2.1, puppeteer-core@23.6.0:
   version "23.6.0"
   resolved "https://registry.npmjs.org/puppeteer-core/-/puppeteer-core-23.6.0.tgz"
@@ -867,7 +869,7 @@ puppeteer-extra@*, puppeteer-extra@^3.3.6:
     debug "^4.1.1"
     deepmerge "^4.2.2"
 
-puppeteer@*:
+puppeteer@*, puppeteer@>=22.0.0:
   version "23.6.0"
   resolved "https://registry.npmjs.org/puppeteer/-/puppeteer-23.6.0.tgz"
   integrity sha512-l+Fgo8SVFSd51STtq2crz8t1Y3VXowsuR4zfR64qDOn6oggz7YIZauWiNR4IJjczQ6nvFs3S4cgng55/nesxTQ==
