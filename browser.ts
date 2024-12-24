@@ -21,7 +21,7 @@ export const initializeCluster = async (maxConcurrency = 5) => {
 	cluster = await Cluster.launch({
 		concurrency: Cluster.CONCURRENCY_PAGE,
 		maxConcurrency,
-		timeout: 120000,
+		timeout: 120000, // 2 minutes
 		puppeteerOptions: {
 			headless: true,
 			args: [

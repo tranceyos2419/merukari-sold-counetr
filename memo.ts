@@ -223,6 +223,36 @@
 
 
 
+//@ handling internet issue kinda thing retry mechanism
+// export async function executeWithRetry<T>(
+// 	operation: () => Promise<T>,
+// 	errorHandler: (error: any) => void
+// ): Promise<T | null> {
+// 	const MAX_RETRIES = 3;
+// 	const retryCount = MAX_RETRIES;
+
+// 	const delay = (ms: number) =>
+// 		new Promise((resolve) => setTimeout(resolve, ms));
+
+// 	for (let attempt = 1; attempt <= retryCount; attempt++) {
+// 		try {
+// 			return await operation();
+// 		} catch (error) {
+// 			errorHandler(error);
+// 			if (attempt < retryCount) {
+// 				console.log(
+// 					`Retrying ${attempt} of ${retryCount}... Waiting 1 minute.`
+// 				);
+// 				await delay(60000); // wait for 60 seconds to retrying
+// 			} else {
+// 				console.error("Max retries reached. Operation failed.");
+// 			}
+// 		}
+// 	}
+// 	return null;
+// }
+
+
 //# main logic
 // MSC
 // Increasing MSC of the item

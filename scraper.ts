@@ -5,7 +5,7 @@ import {
 	ScrapeNMResult,
 	ScrapedCondition,
 } from "./interfaces";
-import { convertTimestampToDate } from "./helper";
+import { convertTimestampToDate, getWaitTime, wait } from "./helper";
 
 export const scrapeOMURL = async (
 	page: Page,
@@ -90,9 +90,10 @@ export const scrapeOMURL = async (
 		if (success) break;
 
 		retries++;
+		const waitTime = getWaitTime(retries);
 		console.warn(`Retrying OMURL scrape (${retries}/${retryLimit})...`);
 		if (retries < retryLimit) {
-			await new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
+			await wait(waitTime)
 		} else {
 			console.error("Exceeded maximum retry attempts for OMURL scrape.");
 		}
@@ -162,15 +163,15 @@ export const scrapeNMURL = async (
 			if (scrapedCondition) {
 				keyword = scrapedCondition.keyword
 					? scrapedCondition.keyword
-							.split(" ")
-							.filter((part) => part.trim() !== "")
-							.join(",")
+						.split(" ")
+						.filter((part) => part.trim() !== "")
+						.join(",")
 					: "";
 				exclusiveKeyword = scrapedCondition.excludeKeyword
 					? scrapedCondition.excludeKeyword
-							.split(" ")
-							.filter((part) => part.trim() !== "")
-							.join("|")
+						.split(" ")
+						.filter((part) => part.trim() !== "")
+						.join("|")
 					: "";
 				priceMin = parseInt(scrapedCondition.priceMin ?? "0", 10);
 				priceMax = parseInt(scrapedCondition.priceMax ?? "0", 10);
@@ -232,15 +233,14 @@ export const scrapeNMURL = async (
 		}
 
 		retries++;
+		const waitTime = getWaitTime(retries);
 		if (retries >= retryLimit) {
 			console.error(`Failed to scrape NMURL ${retryLimit} attempts.`);
 		} else {
 			console.warn(`Retrying NMURL scrape (${retries}/${retryLimit})...`);
-			await new Promise((resolve) => setTimeout(resolve, 60000));
+			await wait(waitTime)
 		}
 	}
 
 	return { MSPC, keyword, exclusiveKeyword, priceMin, priceMax };
 };
-
-

@@ -73,34 +73,17 @@ export const selectRandomProxy = (arr: ProxyInput[]): ProxyInput => {
 	return arr[Math.floor(Math.random() * arr.length)];
 };
 
-// handling internet issue kinda thing retry mechanism
-export async function executeWithRetry<T>(
-	operation: () => Promise<T>,
-	errorHandler: (error: any) => void
-): Promise<T | null> {
-	const MAX_RETRIES = 3;
-	const retryCount = MAX_RETRIES;
+// helper function to wait
+export const wait = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));
 
-	const delay = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
-
-	for (let attempt = 1; attempt <= retryCount; attempt++) {
-		try {
-			return await operation();
-		} catch (error) {
-			errorHandler(error);
-			if (attempt < retryCount) {
-				console.log(
-					`Retrying ${attempt} of ${retryCount}... Waiting 1 minute.`
-				);
-				await delay(60000); // wait for 60 seconds to retrying
-			} else {
-				console.error("Max retries reached. Operation failed.");
-			}
-		}
-	}
-	return null;
+export const getWaitTime = (retryCount: number) => {
+	let waitTime = 5000; // wait for 5 seconds
+	if (retryCount === 1) waitTime = 10000; // wait for 10 seconds
+	if (retryCount === 2) waitTime = 20000; // wait for 20 seconds
+	return waitTime;
 }
+
 
 //$ Data manipulation utils
 export const getDate30DaysAgo = (): string => {
@@ -149,9 +132,9 @@ export const getName = (data: NameParameter): string => {
 		SP:${data.item.SP} |
 		MSPC:${data.MSPC} |
 		MMP:${data.MMP.toLocaleString("ja-JP", {
-			style: "currency",
-			currency: "JPY",
-		})} |
+		style: "currency",
+		currency: "JPY",
+	})} |
 		MSC:${data.MSC} |
 		MWR:${data.MWR} |
 		FMP:${data.item.FMP} |
