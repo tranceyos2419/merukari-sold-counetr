@@ -1,4 +1,8 @@
 import path from "path";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
 import {
 	readDataSet,
 	readProxiesJson,
@@ -13,11 +17,13 @@ import {
 import { CSVInput, CSVOutput, ProxyInput } from "./interfaces";
 import { scrapeOMURL, scrapeNMURL } from "./scraper";
 import { initializeCluster, setupClusterPage, closeCluster } from "./browser";
+import { sendEmailWithRetry } from "./emailer";
+
+dotenv.config();
 
 const INPUT_FILE_PATH = path.join(process.cwd(), "input.csv");
 const OUTPUT_FILE_PATH = path.join(process.cwd(), "output.csv");
 const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
-
 
 (async () => {
 	console.log("Scraping application starting...");
@@ -75,7 +81,12 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 			const NMURL = createNMURL(item.OMURL, item.SP);
 
 			try {
-				const NMResult = await scrapeNMURL(page, NMURL, comparisonDate, item.Identity);
+				const NMResult = await scrapeNMURL(
+					page,
+					NMURL,
+					comparisonDate,
+					item.Identity
+				);
 				if (NMResult) {
 					MSPC = NMResult.MSPC;
 					keyword = NMResult.keyword;
@@ -84,7 +95,12 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 					priceMax = NMResult.priceMax;
 				}
 
-				const OMResult = await scrapeOMURL(page, item.OMURL, comparisonDate, item.Identity);
+				const OMResult = await scrapeOMURL(
+					page,
+					item.OMURL,
+					comparisonDate,
+					item.Identity
+				);
 				if (OMResult) {
 					MSC = OMResult.MSC;
 					prices = OMResult.prices;
@@ -178,8 +194,24 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 		}
 		await cluster.idle();
 		await closeCluster();
+
+		
+
+		console.log("Scraping complete. Sending email...");
+		await sendEmailWithRetry({
+			recipient: process.env.RECIPENT_EMAIL || "",
+			subject: "Scraping Results: Your Requested Data",
+			attachmentPath: OUTPUT_FILE_PATH, 
+			isError: false, 
+		});
 	} catch (error) {
 		console.error("Error during the scraping process:", error);
+		console.log("Sending error email...");
+		await sendEmailWithRetry({
+			recipient: process.env.RECIPENT_EMAIL || "", 
+			subject: "Scraping Error: Notification",
+			isError: true,
+		});
 	} finally {
 		const endTime = performance.now();
 		if (inputDataSet.length !== outputDataSet.length) {

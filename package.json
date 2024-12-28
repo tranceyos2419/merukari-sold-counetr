@@ -11,7 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.9.16",
     "papaparse": "^5.4.1",
     "puppeteer-cluster": "^0.24.0",
     "puppeteer-core": "^23.2.1",
