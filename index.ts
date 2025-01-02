@@ -121,8 +121,6 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 					item: item,
 					MSPC: MSPC,
 					MMP: MMP,
-					MSC: MSC,
-					MWR: MWR,
 				};
 
 				const name = getName(nameParameters);
@@ -195,20 +193,20 @@ const PROXIES_FILE_PATH = path.join(process.cwd(), "proxies.json");
 		await cluster.idle();
 		await closeCluster();
 
-		
+
 
 		console.log("Scraping complete. Sending email...");
 		await sendEmailWithRetry({
 			recipient: process.env.RECIPENT_EMAIL || "",
 			subject: "Scraping Results: Your Requested Data",
-			attachmentPath: OUTPUT_FILE_PATH, 
-			isError: false, 
+			attachmentPath: OUTPUT_FILE_PATH,
+			isError: false,
 		});
 	} catch (error) {
 		console.error("Error during the scraping process:", error);
 		console.log("Sending error email...");
 		await sendEmailWithRetry({
-			recipient: process.env.RECIPENT_EMAIL || "", 
+			recipient: process.env.RECIPENT_EMAIL || "",
 			subject: "Scraping Error: Notification",
 			isError: true,
 		});

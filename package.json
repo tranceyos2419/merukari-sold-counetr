@@ -15,11 +15,11 @@
     "nodemailer": "^6.9.16",
     "papaparse": "^5.4.1",
     "puppeteer-cluster": "^0.24.0",
-    "puppeteer-core": "^23.2.1",
+    "puppeteer-core": "^23.11.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-extra-plugin-user-data-dir": "^2.4.1",
-    "tsx": "^4.19.0",
-    "user-agents": "^1.1.342"
+    "tsx": "^4.19.2",
+    "user-agents": "^1.1.402"
   }
 }

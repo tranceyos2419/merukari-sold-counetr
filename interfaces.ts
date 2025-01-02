@@ -71,8 +71,6 @@ export type NameParameter = {
 	item: CSVInput;
 	MSPC: number;
 	MMP: number;
-	MSC: number;
-	MWR: number;
 };
 
 export interface ScrapedOMURLResult {
